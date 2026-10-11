@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Parapapa · Tarjeta de puntos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Jost:wght@300;400;500;600&display=swap">
+<style>
+  :root{ --brown:#1E5E36; --brown-2:#2E8550; --beige:#F4E7C6; --cream:#FBF7EC; --white:#fff; --line:#E3DCC2; --soft:#6B7A69; --ok:#3F7D5C; }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--cream); color:var(--brown); font-family:'Jost',system-ui,sans-serif;}
+  .app{max-width:440px; margin:0 auto; padding:18px 16px 40px;}
+  .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .demo{font-size:10px; letter-spacing:.18em; text-transform:uppercase; border:1px solid var(--brown-2); padding:3px 8px; border-radius:99px; color:var(--brown-2);}
+  .tabs{display:flex; background:var(--beige); border-radius:99px; padding:4px; gap:4px;}
+  .tabs button{border:none; background:transparent; font:inherit; font-weight:500; padding:8px 14px; border-radius:99px; color:var(--brown); cursor:pointer;}
+  .tabs button.on{background:var(--brown); color:var(--white);}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:26px; margin:6px 0 2px;}
+  .muted{color:var(--soft); font-size:14px; margin:0;}
+
+  /* tarjeta tipo wallet */
+  .card{margin:18px 0; background:var(--brown); color:var(--beige); border-radius:22px; padding:20px; box-shadow:0 14px 30px rgba(30,94,54,.25);}
+  .card-head{display:flex; justify-content:space-between; align-items:flex-start;}
+  .card h2{font-family:'Fraunces',serif; font-weight:500; margin:0; font-size:22px; color:var(--white);}
+  .card small{font-size:11px; letter-spacing:.16em; text-transform:uppercase; opacity:.8;}
+  .stamps{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:18px 0 14px;}
+  .stamp{aspect-ratio:1; border-radius:50%; border:1.5px dashed rgba(232,220,200,.55); display:flex; align-items:center; justify-content:center; font-size:20px;}
+  .stamp.on{background:var(--beige); border:none; color:var(--brown); animation:pop .4s ease;}
+  @keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .progress{font-size:14px; color:var(--white);}
+  .card-foot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:12px; opacity:.85;}
+  .qr{width:54px; height:54px; background:var(--white); border-radius:8px; display:grid; grid-template-columns:repeat(7,1fr); padding:5px; gap:1px;}
+  .qr i{background:var(--brown);} .qr i.w{background:transparent;}
+
+  .wallet{display:flex; gap:8px;}
+  .wallet button{flex:1; border:none; border-radius:12px; padding:11px; font:inherit; font-weight:500; cursor:pointer; background:var(--brown); color:#fff;}
+  .wallet button.g{background:var(--white); color:#111; border:1px solid var(--line);}
+
+  .section{margin-top:22px;}
+  .section h3{font-family:'Fraunces',serif; font-weight:500; font-size:18px; margin:0 0 10px;}
+  .reward{display:flex; justify-content:space-between; align-items:center; background:var(--white); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px;}
+  .reward b{font-weight:500;} .reward span{font-size:13px; color:var(--soft);}
+  .pill{font-size:12px; padding:4px 10px; border-radius:99px; background:var(--beige);}
+  .pill.ok{background:#DCEDE3; color:var(--ok);}
+
+  .notif{display:flex; gap:10px; align-items:flex-start; background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:16px; padding:12px; margin-top:10px; box-shadow:0 8px 20px rgba(30,94,54,.10);}
+  .notif .ic{width:34px; height:34px; border-radius:9px; background:var(--brown); color:var(--beige); display:flex; align-items:center; justify-content:center; flex:none;}
+  .notif p{margin:2px 0 0; font-size:13.5px;} .notif strong{font-size:13px;}
+
+  /* negocio */
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:16px 0;}
+  .stat{background:var(--white); border:1px solid var(--line); border-radius:14px; padding:10px;}
+  .stat b{display:block; font-family:'Fraunces',serif; font-size:22px; font-weight:600;}
+  .stat span{font-size:11px; color:var(--soft); text-transform:uppercase; letter-spacing:.06em;}
+  .box{background:var(--white); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px;}
+  .row{display:flex; gap:8px;}
+  input, textarea, select{font:inherit; color:var(--brown); border:1px solid var(--line); background:var(--cream); border-radius:10px; padding:10px 12px; width:100%;}
+  .btn{border:none; background:var(--brown); color:var(--white); font:inherit; font-weight:500; border-radius:10px; padding:10px 14px; cursor:pointer; white-space:nowrap;}
+  .btn.light{background:var(--beige); color:var(--brown);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  td, th{padding:8px 4px; border-bottom:1px solid var(--line); text-align:left;}
+  th{font-weight:500; color:var(--soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em;}
+  .toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--brown); color:var(--white); padding:11px 16px; border-radius:12px; font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; max-width:90vw;}
+  .toast.show{opacity:1;}
+
+  /* QR del cliente y escáner */
+  .showqr{display:block; width:100%; margin-top:10px; border:1.5px solid var(--brown); background:transparent; color:var(--brown); font:inherit; font-weight:600; border-radius:12px; padding:13px; cursor:pointer;}
+  .qr{cursor:pointer;}
+  .scanbtn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; border:none; background:var(--brown); color:var(--white); font:inherit; font-size:17px; font-weight:600; border-radius:16px; padding:18px; cursor:pointer; box-shadow:0 10px 24px rgba(30,94,54,.22);}
+  .scanbtn svg{width:26px; height:26px;}
+  .ov{position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:18px;}
+  .ov.light{background:rgba(247,241,232,.97);}
+  .ov.dark{background:#0d0907;}
+  .qrbox{width:100%; max-width:360px; text-align:center;}
+  .qrbox canvas{width:250px; height:250px; max-width:100%; background:#fff; padding:14px; border-radius:20px; box-shadow:0 14px 30px rgba(30,94,54,.18); box-sizing:content-box;}
+  .code{font-family:'Fraunces',serif; font-size:26px; letter-spacing:.12em; margin:14px 0 4px;}
+  .timer{height:5px; background:var(--beige); border-radius:99px; overflow:hidden; margin:10px auto 6px; max-width:250px;}
+  .timer i{display:block; height:100%; background:var(--brown); width:100%;}
+  .close{position:absolute; top:calc(14px + env(safe-area-inset-top,0px)); right:14px; width:40px; height:40px; border-radius:50%; border:none; background:var(--beige); color:var(--brown); font-size:18px; cursor:pointer;}
+  .ov.dark .close{background:rgba(255,255,255,.14); color:#fff;}
+  .finder{position:relative; width:260px; height:260px; max-width:78vw; max-height:78vw; margin:0 auto;}
+  .finder canvas{position:absolute; inset:30px; width:calc(100% - 60px); height:calc(100% - 60px); opacity:.85; filter:blur(.4px); background:#fff; border-radius:8px;}
+  .finder .c{position:absolute; width:42px; height:42px; border:4px solid var(--beige);}
+  .finder .c1{top:0; left:0; border-right:none; border-bottom:none; border-radius:14px 0 0 0;}
+  .finder .c2{top:0; right:0; border-left:none; border-bottom:none; border-radius:0 14px 0 0;}
+  .finder .c3{bottom:0; left:0; border-right:none; border-top:none; border-radius:0 0 0 14px;}
+  .finder .c4{bottom:0; right:0; border-left:none; border-top:none; border-radius:0 0 14px 0;}
+  .finder .line{position:absolute; left:12px; right:12px; height:2px; background:#7FD1A0; box-shadow:0 0 12px #7FD1A0; animation:scan 1.4s ease-in-out infinite alternate;}
+  .finder.ok .c{border-color:#7FD1A0;}
+  .finder.ok .line{display:none;}
+  @keyframes scan{from{top:14px} to{top:calc(100% - 16px)}}
+  .scantxt{color:#E8DCC8; text-align:center; margin-top:22px; font-size:15px;}
+  .res{width:100%; max-width:400px; background:var(--cream); border-radius:22px; padding:20px;}
+  .res-head{display:flex; align-items:center; gap:12px;}
+  .avatar{width:48px; height:48px; border-radius:50%; background:var(--brown); color:var(--beige); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:22px; flex:none;}
+  .mini{display:grid; grid-template-columns:repeat(10,1fr); gap:5px; margin:16px 0 8px;}
+  .mini i{aspect-ratio:1; border-radius:50%; border:1.5px dashed var(--line);}
+  .mini i.on{background:var(--brown); border:none;}
+  .free{background:#DCEDE3; color:var(--ok); border-radius:12px; padding:10px 12px; font-weight:500; margin:10px 0 0;}
+  .acts{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+  .acts .btn{padding:14px; font-size:15px;}
+  .acts .wide{grid-column:1/-1;}
+  .btn.okb{background:var(--ok);}
+  .btn:disabled{opacity:.35; cursor:default;}
+  @media (prefers-reduced-motion:reduce){ .finder .line{animation:none; top:50%;} }
+  [hidden]{display:none!important;}
+  .stamp.on{animation:none;}
+  .stamp.on.new{animation:pop .5s ease;}
+  .qr{width:54px; height:54px; padding:4px; display:block;}
+  .live{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ok); margin:-6px 0 8px;}
+  .push{position:fixed; z-index:70; top:calc(10px + env(safe-area-inset-top,0px)); left:50%; width:calc(100% - 24px); max-width:420px; transform:translate(-50%,-150%); transition:transform .35s ease; display:flex; gap:10px; align-items:flex-start; background:var(--white); border:1px solid var(--line); border-radius:18px; padding:12px 14px; box-shadow:0 16px 36px rgba(30,94,54,.22); cursor:pointer;}
+  .push.show{transform:translate(-50%,0);}
+  .push .ic{width:38px; height:38px; border-radius:10px; background:var(--brown); color:var(--beige); display:flex; align-items:center; justify-content:center; flex:none; font-size:18px;}
+  .push small{color:var(--soft); font-size:12px;} .push p{margin:2px 0 0; font-size:14.5px;}
+  .resetbtn{display:block; margin:18px auto 0; background:none; border:none; color:var(--soft); font:inherit; font-size:13px; text-decoration:underline; cursor:pointer;}
+  input,textarea,select{font-size:16px!important;}
+
+  .stamp.on{animation:none;}
+  .stamp.on.new{animation:pop .5s ease;}
+  .qr{width:54px; height:54px; padding:4px; display:block;}
+  .live{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ok); margin:-6px 0 8px;}
+  .push{position:fixed; z-index:70; top:calc(10px + env(safe-area-inset-top,0px)); left:50%; width:calc(100% - 24px); max-width:420px; transform:translate(-50%,-150%); transition:transform .35s ease; display:flex; gap:10px; align-items:flex-start; background:var(--white); border:1px solid var(--line); border-radius:18px; padding:12px 14px; box-shadow:0 16px 36px rgba(30,94,54,.22); cursor:pointer;}
+  .push.show{transform:translate(-50%,0);}
+  .push .ic{width:38px; height:38px; border-radius:10px; background:var(--brown); color:var(--beige); display:flex; align-items:center; justify-content:center; flex:none; font-size:18px;}
+  .push small{color:var(--soft); font-size:12px;} .push p{margin:2px 0 0; font-size:14.5px;}
+  .resetbtn{display:block; margin:18px auto 0; background:none; border:none; color:var(--soft); font:inherit; font-size:13px; text-decoration:underline; cursor:pointer;}
+  .waitbox{margin-top:12px; border:1.5px dashed var(--brown-2); border-radius:16px; padding:14px; text-align:center; background:var(--white);}
+  .waitbox .dot{width:10px; height:10px; border-radius:50%; background:var(--brown-2); display:inline-block; animation:bl 1s infinite; margin-right:6px;}
+  @keyframes bl{50%{opacity:.25}}
+  .reqs{border:2px solid var(--brown); border-radius:18px; padding:14px; background:var(--white); margin:14px 0;}
+  .reqs h3{margin:0 0 4px; font-family:'Fraunces',serif; font-weight:500; display:flex; align-items:center; gap:8px;}
+  .reqs .count{background:var(--brown); color:var(--white); font-family:'Jost',sans-serif; font-size:12px; border-radius:99px; padding:1px 8px;}
+  .req{display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--line);}
+  .req:first-of-type{border-top:none;}
+  .req .who{flex:1; min-width:0;} .req .who b{display:block; font-size:16px;} .req .who span{font-size:12.5px; color:var(--soft);}
+  .req .btn{padding:11px 14px; font-size:14.5px;}
+  .btn.okb{background:var(--ok);}
+  .btn.no{background:var(--beige); color:var(--brown);}
+  .counterqr{display:flex; gap:12px; align-items:center; margin-top:10px;}
+  .counterqr canvas{width:84px; height:84px; background:#fff; border-radius:10px; padding:6px; border:1px solid var(--line); flex:none;}
+  @media (prefers-reduced-motion:reduce){ .waitbox .dot{animation:none;} .finder .line{animation:none; top:50%;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="demo" id="modeTag">Demo · Parapapa</span>
+    <div class="tabs" id="tabs"><button id="tCli" class="on">Cliente</button><button id="tNeg">Negocio</button></div>
+  </div>
+  <p class="live" id="live" hidden>● Conectado en directo</p>
+
+  <!-- ===== CLIENTE ===== -->
+  <section id="vCli">
+    <h1>Hola, Laura ☕</h1>
+    <p class="muted">Tu tarjeta de Parapapa (Vilassar de Mar), siempre en el móvil.</p>
+
+    <div class="card">
+      <div class="card-head">
+        <div><small>Parapapa</small><h2>Tarjeta de cafés</h2></div>
+        <small id="ptsTxt">0 sellos</small>
+      </div>
+      <div class="stamps" id="stamps"></div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <button class="scanbtn" id="scanCounter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M7 12h10"/></svg>
+      Escanear el QR del mostrador
+    </button>
+    <div class="waitbox" id="waitBox" hidden><span class="dot"></span><b>Esperando a que Parapapa confirme tu sello…</b><p class="muted" style="margin:6px 0 0;font-size:13px">En cuanto te lo acepten en la barra, aparece en tu tarjeta.</p></div>
+
+    <div class="wallet" style="margin-top:10px">
+      <button id="wHome">📲 Añadir a la pantalla de inicio</button>
+    </div>
+
+    <div class="section">
+      <h3>Tus premios</h3>
+      <div id="rewards"></div>
+    </div>
+    <div class="section">
+      <h3>Últimos avisos</h3>
+      <div id="notifs"></div>
+    </div>
+  </section>
+
+  <!-- ===== NEGOCIO ===== -->
+  <section id="vNeg" hidden>
+    <h1>Parapapa · Panel</h1>
+    <p class="muted">Tú no escaneas nada: el cliente escanea el QR del mostrador y tú solo aceptas.</p>
+
+    <div class="reqs" id="reqs"></div>
+
+    <div class="stats">
+      <div class="stat"><b id="sCli">0</b><span>Clientes</span></div>
+      <div class="stat"><b id="sVis">0</b><span>Visitas mes</span></div>
+      <div class="stat"><b id="sRep">0%</b><span>Repiten</span></div>
+    </div>
+
+    <div class="box">
+      <h3 style="margin:0 0 10px;font-family:Fraunces,serif;font-weight:500">Enviar aviso</h3>
+      <select id="seg" style="margin-bottom:8px">
+        <option value="todos">A todos los clientes</option>
+        <option value="dormidos">A los que no vienen hace 30 días</option>
+        <option value="top">A los 10 mejores clientes</option>
+      </select>
+      <textarea id="msg" rows="2">🥐 Domingo de churros: doble sello con chocolate hasta las 12:00.</textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="send">Enviar aviso</button></div>
+    </div>
+
+    <div class="box">
+      <h3 style="margin:0 0 6px;font-family:Fraunces,serif;font-weight:500">Tu QR del mostrador</h3>
+      <div class="counterqr"><canvas id="counterQr" width="168" height="168" aria-label="QR del mostrador"></canvas>
+        <p class="muted" style="margin:0;font-size:13px">Este QR va pegado junto a la caja (o en la pantallita del cliente). Siempre es el mismo: si alguien lo escanea desde casa, la solicitud te llega y la puedes rechazar.</p></div>
+    </div>
+
+    <div class="box">
+      <h3 style="margin:0 0 10px;font-family:Fraunces,serif;font-weight:500">Sin móvil: sumar a mano</h3>
+      <div class="row"><select id="who"></select><button class="btn" id="addStamp">+1 sello</button></div>
+    </div>
+
+    <div class="box">
+      <h3 style="margin:0 0 6px;font-family:Fraunces,serif;font-weight:500">Clientes</h3>
+      <table><thead><tr><th>Cliente</th><th>Sellos</th><th>Visitas</th><th>Última</th></tr></thead><tbody id="tbl"></tbody></table>
+      <p class="muted" style="margin-top:8px;font-size:12px">Datos de ejemplo.</p>
+    </div>
+    <button class="resetbtn" id="reset">Reiniciar la demo (Laura vuelve a 6 sellos)</button>
+  </section>
+</div>
+
+<!-- El cliente escanea el QR del mostrador -->
+<div class="ov dark" id="scanOv" hidden>
+  <button class="close" id="scanX" aria-label="Cerrar">✕</button>
+  <div style="width:100%">
+    <div class="finder" id="finder"><canvas id="scanC" width="400" height="400"></canvas><i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i><i class="line"></i></div>
+    <p class="scantxt" id="scanTxt">Apunta al QR del mostrador…</p>
+  </div>
+</div>
+
+<div class="push" id="push" role="status"><div class="ic">☕</div><div><small>Parapapa · ahora</small><p id="pushTxt"></p></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const toast = t => { const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2600); };
+
+  // Laura es la clienta de la demo; "reqs" son las solicitudes de sello que llegan a la barra.
+  const START = { stamps:6, free:0, visits:14, last:"Hoy", avisos:[{ id:1, m:"Te faltan 4 cafés para el siguiente gratis 🎁" }], reqs:[] };
+  let st = clone(START);
+  const others = [
+    { name:"Marc", stamps:9, free:0, visits:21, last:"Ayer" },
+    { name:"Núria", stamps:3, free:0, visits:7, last:"Hace 3 días" },
+    { name:"Jordi", stamps:1, free:0, visits:2, last:"Hace 34 días" },
+    { name:"Anna", stamps:8, free:0, visits:18, last:"Hoy" },
+    { name:"Pol", stamps:4, free:0, visits:9, last:"Hace 12 días" },
+  ];
+  const REWARDS = [ { at:25, txt:"Churros con chocolate" }, { at:50, txt:"Porción de pastel de Guinness + chai latte" } ];
+
+  /* ---------- vista: #cliente, #negocio o las dos con pestañas ---------- */
+  let mode = "";
+  function show(v){ $("tCli").classList.toggle("on", v==="cli"); $("tNeg").classList.toggle("on", v==="neg"); $("vCli").hidden = v!=="cli"; $("vNeg").hidden = v!=="neg"; }
+  function applyMode(){
+    mode = (location.hash||"").slice(1);
+    const only = mode==="cliente" || mode==="negocio";
+    $("tabs").hidden = only;
+    $("modeTag").textContent = mode==="cliente" ? "Demo · cliente" : mode==="negocio" ? "Demo · negocio" : "Demo · Parapapa";
+    show(mode==="negocio" ? "neg" : "cli");
+  }
+  $("tCli").onclick = ()=>show("cli"); $("tNeg").onclick = ()=>show("neg");
+  window.addEventListener("hashchange", applyMode);
+
+  /* ---------- QR decorativo ---------- */
+  function drawQR(cv, seed){
+    const N=25, ctx=cv.getContext("2d"), s=cv.width/N;
+    let x = 2166136261; for (const ch of seed) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
+    const rnd = () => { x ^= x<<13; x>>>=0; x ^= x>>>17; x ^= x<<5; x>>>=0; return x/4294967296; };
+    ctx.fillStyle="#fff"; ctx.fillRect(0,0,cv.width,cv.height); ctx.fillStyle="#123D22";
+    const finder = (cx,cy) => { ctx.fillRect(cx*s,cy*s,7*s,7*s); ctx.fillStyle="#fff"; ctx.fillRect((cx+1)*s,(cy+1)*s,5*s,5*s); ctx.fillStyle="#123D22"; ctx.fillRect((cx+2)*s,(cy+2)*s,3*s,3*s); };
+    const inF = (i,j) => (i<8&&j<8)||(i>N-9&&j<8)||(i<8&&j>N-9);
+    for (let i=0;i<N;i++) for (let j=0;j<N;j++) if (!inF(i,j) && rnd()<.5) ctx.fillRect(i*s,j*s,Math.ceil(s),Math.ceil(s));
+    finder(0,0); finder(N-7,0); finder(0,N-7);
+  }
+  drawQR($("counterQr"), "parapapa-mostrador");
+
+  /* ---------- cliente ---------- */
+  let shown = -1;
+  const myPending = () => st.reqs.find(r => r.status === "pendiente");
+  function renderCli(){
+    const inCard = st.stamps % 10, full = inCard===0 && st.free>0, filled = full ? 10 : inCard;
+    $("stamps").innerHTML = Array.from({length:10},(_,i)=>`<div class="stamp ${i<filled?'on':''} ${i<filled && shown>=0 && i>=shown?'new':''}">${i<filled?'☕':''}</div>`).join("");
+    shown = filled;
+    $("progress").textContent = st.free>0 ? `¡Tienes ${st.free} café${st.free>1?"s":""} gratis! Pídelo en la barra 🎉` : `Te faltan ${10-inCard} cafés para el siguiente gratis`;
+    $("ptsTxt").textContent = `${st.stamps} sellos`;
+    $("rewards").innerHTML =
+      `<div class="reward"><div><b>Café gratis</b><br><span>Cada 10 sellos</span></div>${st.free>0?`<span class="pill ok">Disponible${st.free>1?" ×"+st.free:""}</span>`:`<span class="pill">Faltan ${10-inCard}</span>`}</div>` +
+      REWARDS.map(r=>`<div class="reward"><div><b>${r.txt}</b><br><span>${r.at} sellos</span></div>${st.stamps>=r.at?'<span class="pill ok">Disponible</span>':`<span class="pill">Faltan ${r.at-st.stamps}</span>`}</div>`).join("");
+    const last = st.avisos.slice(-3).reverse();
+    $("notifs").innerHTML = last.map(()=>`<div class="notif"><div class="ic">☕</div><div><strong>Parapapa</strong><p></p></div></div>`).join("");
+    [...$("notifs").querySelectorAll("p")].forEach((p,i)=>{ p.textContent = last[i].m; });
+    const pend = !!myPending();
+    $("waitBox").hidden = !pend; $("scanCounter").hidden = pend;
+  }
+
+  /* ---------- negocio ---------- */
+  const ago = t => { const s = Math.max(0, Math.round((Date.now()-t)/1000)); return s < 60 ? `hace ${s} s` : `hace ${Math.round(s/60)} min`; };
+  function renderNeg(){
+    const pend = st.reqs.filter(r => r.status === "pendiente");
+    $("reqs").innerHTML = `<h3>Solicitudes de sello ${pend.length ? `<span class="count">${pend.length}</span>` : ""}</h3>` +
+      (pend.length ? pend.map(r => `<div class="req"><div class="who"><b>☕ ${r.name} pide un sello</b><span>${ago(r.at)} · ${(st.stamps%10)}/10 sellos</span></div>
+        <button class="btn okb" data-ok="${r.id}">Aceptar</button><button class="btn no" data-no="${r.id}">Rechazar</button></div>`).join("")
+        : `<p class="muted" style="margin:6px 0 0;font-size:13.5px">No hay ninguna pendiente. Cuando un cliente escanee el QR del mostrador, aparecerá aquí y sonará un aviso.</p>`);
+    const L = [{ name:"Laura", ...st }, ...others];
+    $("sCli").textContent = 128; $("sVis").textContent = 412 + L.reduce((a,c)=>a+c.visits,0); $("sRep").textContent = "64%";
+    $("tbl").innerHTML = L.map(c=>`<tr><td></td><td>${c.stamps % 10}/10${c.free?" · 🎁":""}</td><td>${c.visits}</td><td>${c.last}</td></tr>`).join("");
+    [...$("tbl").querySelectorAll("tr")].forEach((tr,i)=>{ tr.firstChild.textContent = L[i].name; });
+    const sel=$("who"), v=sel.value;
+    sel.innerHTML = L.map((c,i)=>`<option value="${i}"></option>`).join(""); [...sel.options].forEach((o,i)=>{ o.textContent = L[i].name; });
+    if (v) sel.value = v;
+  }
+  function render(){ renderCli(); renderNeg(); }
+
+  /* ---------- guardar: servidor (dos móviles) o este móvil ---------- */
+  let online = false, ver = 0, saving = false;
+  async function save(){
+    if (!online) return;
+    saving = true;
+    try{ const r = await fetch("/api/state", { method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(st) }); const j = await r.json(); ver = j.ver || ver; }
+    catch(e){ toast("Sin conexión: prueba otra vez"); }
+    finally{ saving = false; }
+  }
+  function aviso(m){ st.avisos.push({ id:Date.now(), m }); st.avisos = st.avisos.slice(-8); }
+  function addStamps(c, n){ for (let i=0;i<n;i++){ c.stamps++; if (c.stamps%10===0) c.free++; } c.visits++; c.last="Hoy"; }
+
+  /* ---------- sonido y notificación ---------- */
+  let ac = null;
+  function unlock(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlock, { once:false });
+  function ding(){
+    if (!ac) return;
+    [[1568,0],[2093,.15],[2637,.3]].forEach(([f,t]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type="triangle"; o.frequency.value=f;
+      const t0 = ac.currentTime + t; g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(.8,t0+.01); g.gain.exponentialRampToValueAtTime(.0001,t0+.45);
+      o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0+.5); });
+    try{ navigator.vibrate && navigator.vibrate([200,80,200]); }catch(e){}
+  }
+  function pushNote(m){
+    $("pushTxt").textContent = m; const p=$("push"); p.classList.add("show");
+    try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(e){}
+    clearTimeout(p._t); p._t=setTimeout(()=>p.classList.remove("show"),4200);
+  }
+  $("push").onclick = ()=>$("push").classList.remove("show");
+
+  /* ---------- cliente: escanear el QR del mostrador ---------- */
+  let scanT = [];
+  $("scanCounter").onclick = () => {
+    if (myPending()) return;
+    $("scanOv").hidden = false; $("finder").classList.remove("ok"); $("scanTxt").textContent = "Apunta al QR del mostrador…";
+    drawQR($("scanC"), "parapapa-mostrador");
+    scanT.forEach(clearTimeout);
+    scanT = [
+      setTimeout(()=>{ $("finder").classList.add("ok"); $("scanTxt").textContent = "✓ Parapapa · sello pedido"; try{ navigator.vibrate && navigator.vibrate(80); }catch(e){} }, 1500),
+      setTimeout(async ()=>{ $("scanOv").hidden = true;
+        st.reqs = st.reqs.filter(r => r.status === "pendiente").concat([{ id:"r"+Date.now(), name:"Laura", at:Date.now(), status:"pendiente" }]).slice(-10);
+        render(); toast("Sello pedido: espera a que lo confirmen en la barra"); await save();
+        if (!online && $("vCli").hidden === false && !$("tabs").hidden) toast("En la demo: abre la pestaña Negocio y acéptalo"); }, 2200)
+    ];
+  };
+  $("scanX").onclick = () => { scanT.forEach(clearTimeout); $("scanOv").hidden = true; };
+
+  /* ---------- negocio: aceptar o rechazar ---------- */
+  document.addEventListener("click", async e => {
+    const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]");
+    if (!ok && !no) return;
+    const r = st.reqs.find(x => x.id === (ok || no).dataset.ok || x.id === (ok || no).dataset.no);
+    if (!r || r.status !== "pendiente") return;
+    if (ok){ const before = st.free; addStamps(st, 1); r.status = "aceptada";
+      aviso(st.free > before ? "🎉 ¡Tarjeta completa! Tu próximo café es gratis." : `+1 sello. Te faltan ${10 - st.stamps % 10} para el café gratis.`);
+      toast(`Sello sumado a ${r.name}`); }
+    else { r.status = "rechazada"; toast("Solicitud rechazada"); }
+    render(); await save();
+  });
+
+  /* ---------- resto del panel ---------- */
+  $("addStamp").onclick = async()=>{
+    const i=+$("who").value;
+    if (i===0){ const before=st.free; addStamps(st,1); aviso(st.free>before ? "🎉 ¡Tarjeta completa! Tu próximo café es gratis." : `+1 sello. Te faltan ${10-st.stamps%10} para el café gratis.`); render(); toast("Sello sumado a Laura"); await save(); }
+    else { addStamps(others[i-1],1); render(); toast(`Sello sumado a ${others[i-1].name}`); }
+  };
+  $("send").onclick = async()=>{ const m=$("msg").value.trim(); if(!m) return toast("Escribe el aviso"); aviso(m); render(); toast(`Aviso enviado ${$("seg").selectedOptions[0].textContent.toLowerCase()}`); await save(); };
+  const RESET_TXT = "Reiniciar la demo (Laura vuelve a 6 sellos)"; let armed = false;
+  $("reset").onclick = async()=>{
+    if (!armed){ armed=true; $("reset").textContent="Pulsa otra vez para reiniciar"; setTimeout(()=>{ armed=false; $("reset").textContent=RESET_TXT; },3000); return; }
+    armed=false; $("reset").textContent=RESET_TXT; st = clone(START); st.avisos=[{ id:Date.now(), m:START.avisos[0].m }]; shown=-1; render(); toast("Demo reiniciada"); await save();
+  };
+  $("wHome").onclick = ()=> toast("En la versión real, la tarjeta queda como una app en tu móvil, sin descargar nada.");
+
+  applyMode(); render();
+  setInterval(() => { if (!$("vNeg").hidden) renderNeg(); }, 5000);   // refresca «hace X s»
+
+  /* ---------- conexión con el servidor (dos móviles) ---------- */
+  let firstLoad = true;
+  async function poll(){
+    if (saving) return;
+    try{
+      const r = await fetch("/api/state", { cache:"no-store" }); if (!r.ok) throw 0;
+      const j = await r.json(); online = true; $("live").hidden = false;
+      if (!j.state){ if (firstLoad){ firstLoad = false; await save(); } return; }
+      if (j.ver === ver && !firstLoad) return;
+      const prev = st; ver = j.ver; st = j.state; st.reqs = st.reqs || []; st.avisos = st.avisos || [];
+      if (!firstLoad){
+        const newPend = st.reqs.filter(x => x.status === "pendiente" && !prev.reqs.some(p => p.id === x.id));
+        if (newPend.length && mode !== "cliente" && !$("vNeg").hidden) ding();
+        if (mode !== "negocio" && !$("vCli").hidden){
+          const acc = st.reqs.find(x => x.status === "aceptada" && prev.reqs.some(p => p.id === x.id && p.status === "pendiente"));
+          const rej = st.reqs.find(x => x.status === "rechazada" && prev.reqs.some(p => p.id === x.id && p.status === "pendiente"));
+          const newAv = st.avisos.filter(a => !prev.avisos.some(p => p.id === a.id));
+          if (acc) pushNote("☕ +1 sello. ¡Gracias por venir!");
+          else if (rej) pushNote("No se ha podido confirmar el sello. Pregunta en la barra.");
+          else if (newAv.length) pushNote(newAv[newAv.length-1].m);
+        }
+      }
+      if (st.stamps < prev.stamps) shown = -1;
+      firstLoad = false; render();
+    }catch(e){ online = false; }
+  }
+  poll(); setInterval(poll, 1500);
+})();
+</script>
+</body>
+</html>
