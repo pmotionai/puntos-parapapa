@@ -590,7 +590,7 @@
   if (qrScan || fromPush) history.replaceState(null, "", location.pathname + (location.hash || "#cliente"));
   let wantStamp = qrScan;   // ha escaneado el QR de verdad: en cuanto sepamos quién es, pedimos el sello
 
-  function forget(msg){ ["cid","copy","gen","revDone","revAfter","seenStamps"].forEach(ls.del); me = null; myReq = null; shown = -1; views(); if (msg) toast(msg); }
+  function forget(msg){ ["cid","copy","gen","revDone","revAfter","seenStamps","pushCid"].forEach(ls.del); me = null; myReq = null; shown = -1; views(); if (msg) toast(msg); }
 
   // Registro
   $("regForm").addEventListener("submit", async e => {
@@ -602,7 +602,7 @@
     $("rGo").disabled = true;
     try{
       const j = await api("/api/register", { name, tel, priv:true, ofertas:$("rOf").checked });
-      gen = j.gen; me = j.client; saveCopy(); views(); renderCli(); toast(`¡Tarjeta creada, ${me.name}! ☕`);
+      gen = j.gen; me = j.client; saveCopy(); views(); renderCli(); ensurePush(); toast(`¡Tarjeta creada, ${me.name}! ☕`);
       if (wantStamp) requestStamp();
     }catch(x){
       err.textContent = x.body && x.body.exists ? "Ya tienes una tarjeta con este móvil: entra con tu teléfono aquí abajo." : x.message; err.hidden = false;
@@ -612,7 +612,7 @@
   $("toLogin").onclick = () => { $("loginForm").hidden = false; $("lTel").focus(); };
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault(); const err = $("lErr"); err.hidden = true;
-    try{ const j = await api("/api/login", { tel:$("lTel").value }); gen = j.gen; me = j.client; saveCopy(); views(); renderCli(); toast(`Hola de nuevo, ${me.name} ☕`); if (wantStamp) requestStamp(); }
+    try{ const j = await api("/api/login", { tel:$("lTel").value }); gen = j.gen; me = j.client; saveCopy(); views(); renderCli(); ensurePush(); toast(`Hola de nuevo, ${me.name} ☕`); if (wantStamp) requestStamp(); }
     catch(x){ err.textContent = x.message; err.hidden = false; }
   });
 
@@ -707,10 +707,10 @@
       $("live").hidden = false;
       const prevReq = myReq, prevAv = (me && me.avisos || []).map(a => a.id);
       gen = j.gen; me = j.client; myReq = j.req; saveCopy();
-      if (!$("vCli").hidden && prevReq && prevReq.status === "pendiente" && myReq && myReq.id === prevReq.id && myReq.status !== "pendiente" && !pushOn("cliente"))
+      if (!$("vCli").hidden && prevReq && prevReq.status === "pendiente" && myReq && myReq.id === prevReq.id && myReq.status !== "pendiente" && !phoneNotis())
         pushNote(myReq.status === "aceptada" ? "☕ +1 sello. ¡Gracias por venir!" : "No se ha podido confirmar el sello. Pregunta en la barra.");
-      else if (seenAv && !pushOn("cliente")){ const nw = (me.avisos || []).filter(a => !prevAv.includes(a.id)); if (nw.length) pushNote(nw[nw.length-1].m); }
-      seenAv = true; views(); renderCli();
+      else if (seenAv && !phoneNotis()){ const nw = (me.avisos || []).filter(a => !prevAv.includes(a.id)); if (nw.length) pushNote(nw[nw.length-1].m); }
+      seenAv = true; views(); renderCli(); ensurePush();
       if (wantStamp) requestStamp();
     }catch(x){
       if (x.status === 410) forget(ls.get("copy") ? "Tu tarjeta ya no existe. Créala de nuevo cuando quieras." : "");
@@ -838,7 +838,8 @@
 
   const b64u = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
   const pushOK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-  const pushOn = role => pushOK && Notification.permission === "granted" && ls.get(role === "negocio" ? "pushNeg" : "pushCli") === "1";
+  const phoneNotis = () => pushOK && Notification.permission === "granted";   // con permiso, los avisos van SOLO al móvil
+  const pushOn = role => pushOK && Notification.permission === "granted" && (ls.get(role === "negocio" ? "pushNeg" : "pushCli") === "1" || ls.get("pushRole") === role);
   function markPush(role){ const b = $(role === "negocio" ? "pushNeg" : "pushCli"); if (b){ b.textContent = role === "negocio" ? "🔔 Avisos de solicitudes activados en este móvil" : "🔔 Avisos activados"; b.disabled = true; } }
   async function subscribe(role, test){
     const reg = await navigator.serviceWorker.ready;
@@ -846,9 +847,11 @@
     if (!sub){ const key = await fetch("/api/vapid").then(r => { if (!r.ok) throw new Error("claves"); return r.text(); });
       sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u(key) }); }
     await api("/api/subscribe", { sub, role, test, cid:ls.get("cid"), pin:pin(), reviewed:!!ls.get("revDone") });
-    ls.set(role === "negocio" ? "pushNeg" : "pushCli", "1"); markPush(role);
+    ls.set(role === "negocio" ? "pushNeg" : "pushCli", "1"); if (role === "cliente") ls.set("pushCid", ls.get("cid") || ""); markPush(role);
   }
   function reSub(){ try{ if (pushOn("cliente")) subscribe("cliente", false).catch(()=>{}); }catch(e){} }
+  // Si el móvil ya dio permiso (aunque fuera con la versión anterior), se apunta solo con su tarjeta: nada que pulsar otra vez
+  function ensurePush(){ try{ if (pushOK && Notification.permission === "granted" && ls.get("cid") && ls.get("pushCid") !== ls.get("cid")){ ls.set("pushCid", ls.get("cid")); subscribe("cliente", false).catch(() => ls.del("pushCid")); } else if (pushOn("cliente")) markPush("cliente"); }catch(e){} }
   async function enablePush(role){
     if (isIOS && !standalone()){ toast("En iPhone, primero guarda la tarjeta en la pantalla de inicio y actívalos desde allí"); openSheet("install"); return; }
     if (!pushOK){ toast("Este navegador no admite avisos. Prueba con Chrome o Safari"); return; }
@@ -860,7 +863,7 @@
   $("pushCli").onclick = () => enablePush("cliente");
   $("pushNeg").onclick = () => enablePush("negocio");
   if (pushOK && Notification.permission === "granted"){
-    if (ls.get("pushCli") === "1" && ls.get("cid")) subscribe("cliente", false).catch(()=>{});
+    if (ls.get("cid")) subscribe("cliente", false).catch(()=>{});
     if (ls.get("pushNeg") === "1" && pin()) subscribe("negocio", false).catch(()=>{});
   }
 
