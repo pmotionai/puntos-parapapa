@@ -115,15 +115,35 @@
   .resetbtn{display:block; margin:18px auto 0; background:none; border:none; color:var(--soft); font:inherit; font-size:13px; text-decoration:underline; cursor:pointer;}
   input,textarea,select{font-size:16px!important;}
 
-  .stamp.on{animation:none;}
-  .stamp.on.new{animation:pop .5s ease;}
-  .qr{width:54px; height:54px; padding:4px; display:block;}
-  .live{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ok); margin:-6px 0 8px;}
-  .push{position:fixed; z-index:70; top:calc(10px + env(safe-area-inset-top,0px)); left:50%; width:calc(100% - 24px); max-width:420px; transform:translate(-50%,-150%); transition:transform .35s ease; display:flex; gap:10px; align-items:flex-start; background:var(--white); border:1px solid var(--line); border-radius:18px; padding:12px 14px; box-shadow:0 16px 36px rgba(30,94,54,.22); cursor:pointer;}
-  .push.show{transform:translate(-50%,0);}
-  .push .ic{width:38px; height:38px; border-radius:10px; background:var(--brown); color:var(--beige); display:flex; align-items:center; justify-content:center; flex:none; font-size:18px;}
-  .push small{color:var(--soft); font-size:12px;} .push p{margin:2px 0 0; font-size:14.5px;}
-  .resetbtn{display:block; margin:18px auto 0; background:none; border:none; color:var(--soft); font:inherit; font-size:13px; text-decoration:underline; cursor:pointer;}
+  /* ===== apple-design: respuesta al pulsar, muelles, gestos y materiales (colores de Parapapa intactos) ===== */
+  button,.btn,.scanbtn,.req{touch-action:manipulation; -webkit-tap-highlight-color:transparent;}
+  button,.btn,.scanbtn{transition:transform 100ms ease-out, background-color .15s, color .15s;}
+  button:active,.btn:active{transform:scale(.97);}
+  .scanbtn:active{transform:scale(.98); box-shadow:0 4px 12px rgba(30,94,54,.22);}
+  h1{letter-spacing:-.02em; line-height:1.1;}
+  .card h2{letter-spacing:-.01em;}
+  .stamp.on, .stamp.on.new{animation:none;}
+  .stamp{will-change:transform;}
+  /* pestañas con indicador que se desliza */
+  .tabs{position:relative;}
+  .tabs .ind{position:absolute; top:4px; bottom:4px; left:0; width:0; border-radius:99px; background:var(--brown); will-change:transform,width;}
+  .tabs button{position:relative; z-index:1; transition:color .2s;}
+  .tabs button.on{background:transparent;}
+  /* aviso del móvil: material translúcido que se arrastra hacia arriba para quitarlo */
+  .push{transform:translate(-50%,-160%); transition:none; touch-action:none; user-select:none; will-change:transform;
+        background:rgba(255,255,255,.72); -webkit-backdrop-filter:blur(20px) saturate(180%); backdrop-filter:blur(20px) saturate(180%); border-color:rgba(255,255,255,.6);}
+  .push.show{transform:translate(-50%,-160%);}
+  .push .grab{position:absolute; left:50%; bottom:5px; width:36px; height:4px; margin-left:-18px; border-radius:2px; background:rgba(30,94,54,.18);}
+  /* solicitudes: desliza a la derecha para aceptar, a la izquierda para rechazar */
+  .reqwrap{position:relative; overflow:hidden; border-top:1px solid var(--line);}
+  .reqwrap:first-of-type{border-top:none;}
+  .reqwrap .under{position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; padding:0 16px; font-weight:600; font-size:14px;}
+  .reqwrap .under .a{color:var(--ok);} .reqwrap .under .r{color:var(--soft);}
+  .reqwrap .req{border-top:none; background:var(--white); touch-action:pan-y; will-change:transform; cursor:grab;}
+  .swipehint{font-size:12px; color:var(--soft); margin:2px 0 4px;}
+  .ov{will-change:transform,opacity;}
+  @media (prefers-reduced-transparency:reduce){ .push{background:#fff; -webkit-backdrop-filter:none; backdrop-filter:none; border-color:var(--line);} }
+  @media (prefers-contrast:more){ .push{background:#fff; border:1.5px solid var(--brown);} }
   .waitbox{margin-top:12px; border:1.5px dashed var(--brown-2); border-radius:16px; padding:14px; text-align:center; background:var(--white);}
   .waitbox .dot{width:10px; height:10px; border-radius:50%; background:var(--brown-2); display:inline-block; animation:bl 1s infinite; margin-right:6px;}
   @keyframes bl{50%{opacity:.25}}
@@ -145,7 +165,7 @@
 <div class="app">
   <div class="top">
     <span class="demo" id="modeTag">Demo · Parapapa</span>
-    <div class="tabs" id="tabs"><button id="tCli" class="on">Cliente</button><button id="tNeg">Negocio</button></div>
+    <div class="tabs" id="tabs"><i class="ind" id="tabInd" aria-hidden="true"></i><button id="tCli" class="on">Cliente</button><button id="tNeg">Negocio</button></div>
   </div>
   <p class="live" id="live" hidden>● Conectado en directo</p>
 
@@ -236,7 +256,7 @@
   </div>
 </div>
 
-<div class="push" id="push" role="status"><div class="ic">☕</div><div><small>Parapapa · ahora</small><p id="pushTxt"></p></div></div>
+<div class="push" id="push" role="status"><div class="ic">☕</div><div><small>Parapapa · ahora</small><p id="pushTxt"></p></div><i class="grab" aria-hidden="true"></i></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -245,6 +265,56 @@
   const $ = id => document.getElementById(id);
   const clone = o => JSON.parse(JSON.stringify(o));
   const toast = t => { const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2600); };
+
+  /* ---------- física (skill apple-design): muelles interrumpibles, inercia y efecto goma ---------- */
+  const RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Muelle con los dos parámetros de Apple: damping (1 = sin rebote) y response (s). Empieza en el valor actual y hereda velocidad.
+  function spring(o){
+    const k = Math.pow(2*Math.PI/o.response, 2), c = 4*Math.PI*o.damping/o.response;
+    const range = Math.max(Math.abs(o.to - o.from), 1), eps = range * 0.002;
+    let x = o.from, v = o.v || 0, raf = 0, last = performance.now(), stopped = false;
+    const h = { get x(){ return x; }, get v(){ return v; }, stop(){ stopped = true; cancelAnimationFrame(raf); } };
+    if (RM){ x = o.to; o.update(x); o.done && o.done(); return h; }
+    function step(now){
+      if (stopped) return;
+      const dt = Math.min(.064, (now - last) / 1000); last = now;
+      const n = Math.max(1, Math.ceil(dt / .004)), s = dt / n;
+      for (let i = 0; i < n; i++){ const a = -k*(x - o.to) - c*v; v += a*s; x += v*s; }
+      if (Math.abs(x - o.to) < eps && Math.abs(v) < eps*10){ x = o.to; o.update(x); o.done && o.done(); return; }
+      o.update(x); raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step); return h;
+  }
+  const project = (v, d=.998) => (v/1000) * d / (1 - d);                       // a dónde va el gesto
+  const rubber = (over, dim, c=.55) => (over*dim*c) / (dim + c*Math.abs(over)); // resistencia en los bordes
+  // Arrastre con Pointer Events: sigue al dedo 1:1, umbral de 10 px y velocidad al soltar.
+  function drag(el, axis, h){
+    let id = null, start = 0, other = 0, base = 0, hist = [], locked = false, moved = false;
+    el.addEventListener("pointerdown", e => {
+      if (e.target.closest("button")) return;
+      id = e.pointerId; start = axis === "x" ? e.clientX : e.clientY; other = axis === "x" ? e.clientY : e.clientX;
+      base = h.start(); hist = [{ p:start, t:e.timeStamp }]; locked = false; moved = false;
+    });
+    el.addEventListener("pointermove", e => {
+      if (e.pointerId !== id) return;
+      const p = axis === "x" ? e.clientX : e.clientY, q = axis === "x" ? e.clientY : e.clientX;
+      if (!locked){
+        if (Math.abs(q - other) > 10 && Math.abs(q - other) > Math.abs(p - start)){ id = null; h.cancel && h.cancel(); return; } // era scroll
+        if (Math.abs(p - start) < 10) return;
+        locked = true; moved = true; try{ el.setPointerCapture(id); }catch(err){} h.lock && h.lock();
+      }
+      hist.push({ p, t:e.timeStamp }); if (hist.length > 6) hist.shift();
+      h.move(base + p - start);
+    });
+    const end = e => {
+      if (e.pointerId !== id) return; id = null;
+      if (!locked){ h.cancel && h.cancel(); return; }
+      const a = hist[0], b = hist[hist.length-1], dt = Math.max(1, b.t - a.t);
+      h.end((b.p - a.p) / dt * 1000);
+    };
+    el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+    return { get moved(){ return moved; } };
+  }
 
   // Laura es la clienta de la demo; "reqs" son las solicitudes de sello que llegan a la barra.
   const START = { stamps:6, free:0, visits:14, last:"Hoy", avisos:[{ id:1, m:"Te faltan 4 cafés para el siguiente gratis 🎁" }], reqs:[] };
@@ -260,14 +330,31 @@
 
   /* ---------- vista: #cliente, #negocio o las dos con pestañas ---------- */
   let mode = "";
-  function show(v){ $("tCli").classList.toggle("on", v==="cli"); $("tNeg").classList.toggle("on", v==="neg"); $("vCli").hidden = v!=="cli"; $("vNeg").hidden = v!=="neg"; }
+  let indX = null, indW = null, indSX = null, indSW = null;
+  function moveInd(btn, instant){
+    const ind = $("tabInd"); if (!btn.offsetWidth) return;
+    const tx = btn.offsetLeft, tw = btn.offsetWidth;
+    if (instant || indX === null){ indX = tx; indW = tw; ind.style.transform = `translateX(${tx}px)`; ind.style.width = tw+"px"; return; }
+    const fx = indX, fw = indW, vx = indSX ? indSX.v : 0, vw = indSW ? indSW.v : 0;
+    indSX && indSX.stop(); indSW && indSW.stop();
+    indSX = spring({ from:fx, to:tx, v:vx, damping:1, response:.32, update:x=>{ indX = x; ind.style.transform = `translateX(${x}px)`; } });
+    indSW = spring({ from:fw, to:tw, v:vw, damping:1, response:.32, update:w=>{ indW = w; ind.style.width = w+"px"; } });
+  }
+  function show(v, instant){
+    $("tCli").classList.toggle("on", v==="cli"); $("tNeg").classList.toggle("on", v==="neg");
+    $("tCli").style.color = v==="cli" ? "#fff" : ""; $("tNeg").style.color = v==="neg" ? "#fff" : "";
+    $("vCli").hidden = v!=="cli"; $("vNeg").hidden = v!=="neg";
+    moveInd(v==="cli" ? $("tCli") : $("tNeg"), instant);
+  }
   function applyMode(){
     mode = (location.hash||"").slice(1);
     const only = mode==="cliente" || mode==="negocio";
     $("tabs").hidden = only;
     $("modeTag").textContent = mode==="cliente" ? "Demo · cliente" : mode==="negocio" ? "Demo · negocio" : "Demo · Parapapa";
-    show(mode==="negocio" ? "neg" : "cli");
+    show(mode==="negocio" ? "neg" : "cli", true);
   }
+  // Responde al pulsar (pointerdown), no al soltar
+  $("tCli").addEventListener("pointerdown", ()=>show("cli")); $("tNeg").addEventListener("pointerdown", ()=>show("neg"));
   $("tCli").onclick = ()=>show("cli"); $("tNeg").onclick = ()=>show("neg");
   window.addEventListener("hashchange", applyMode);
 
@@ -285,11 +372,21 @@
   drawQR($("counterQr"), "parapapa-mostrador");
 
   /* ---------- cliente ---------- */
+  // El sello «cae» sobre la tarjeta: un golpe con algo de rebote (es un gesto con fuerza), vibración y sonido en el mismo instante.
+  function stampIn(el){
+    el.style.opacity = "0";
+    thock(); try{ navigator.vibrate && navigator.vibrate(18); }catch(e){}
+    spring({ from:0, to:1, damping:.72, response:.38,
+      update:p => { el.style.opacity = Math.min(1, p*3); el.style.transform = `scale(${1.55 - .55*p}) rotate(${-14*(1-p)}deg)`; },
+      done:() => { el.style.transform = ""; el.style.opacity = ""; } });
+  }
   let shown = -1;
   const myPending = () => st.reqs.find(r => r.status === "pendiente");
   function renderCli(){
     const inCard = st.stamps % 10, full = inCard===0 && st.free>0, filled = full ? 10 : inCard;
-    $("stamps").innerHTML = Array.from({length:10},(_,i)=>`<div class="stamp ${i<filled?'on':''} ${i<filled && shown>=0 && i>=shown?'new':''}">${i<filled?'☕':''}</div>`).join("");
+    const fresh = shown >= 0 && filled > shown ? shown : -1;
+    $("stamps").innerHTML = Array.from({length:10},(_,i)=>`<div class="stamp ${i<filled?'on':''}">${i<filled?'☕':''}</div>`).join("");
+    if (fresh >= 0) [...$("stamps").children].slice(fresh, filled).forEach((el, j) => setTimeout(() => stampIn(el), j*90));
     shown = filled;
     $("progress").textContent = st.free>0 ? `¡Tienes ${st.free} café${st.free>1?"s":""} gratis! Pídelo en la barra 🎉` : `Te faltan ${10-inCard} cafés para el siguiente gratis`;
     $("ptsTxt").textContent = `${st.stamps} sellos`;
@@ -305,12 +402,35 @@
 
   /* ---------- negocio ---------- */
   const ago = t => { const s = Math.max(0, Math.round((Date.now()-t)/1000)); return s < 60 ? `hace ${s} s` : `hace ${Math.round(s/60)} min`; };
+  let swiping = false;
+  function bindSwipe(wrap){
+    const row = wrap.querySelector(".req"), id = row.dataset.id, ua = wrap.querySelector(".a"), ur = wrap.querySelector(".r");
+    let x = 0, sp = null;
+    const set = v => { x = v; row.style.transform = `translateX(${v}px)`; const w = wrap.offsetWidth*.4; ua.style.opacity = Math.max(0, Math.min(1, v/w)); ur.style.opacity = Math.max(0, Math.min(1, -v/w)); };
+    drag(row, "x", {
+      start: () => { sp && sp.stop(); return x; },             // se puede agarrar a mitad de animación
+      lock: () => { swiping = true; },
+      move: v => { const lim = wrap.offsetWidth; set(Math.abs(v) > lim ? Math.sign(v)*(lim + rubber(Math.abs(v)-lim, lim)) : v); },
+      cancel: () => {},
+      end: vel => {
+        const w = wrap.offsetWidth, land = x + project(vel);   // decide por hacia dónde iba el dedo, no por dónde lo soltó
+        const dir = land > w*.4 ? 1 : land < -w*.4 ? -1 : 0;
+        if (!dir){ sp = spring({ from:x, to:0, v:vel, damping:1, response:.3, update:set, done:()=>{ swiping = false; } }); return; }
+        let once = false; const fin = () => { if (once) return; once = true; swiping = false; decide(id, dir > 0); };
+        sp = spring({ from:x, to:dir*(w+40), v:vel, damping:1, response:.25, update:set, done:fin });
+        setTimeout(fin, 450);                                   // la decisión no depende de que se pinte la animación
+      }
+    });
+  }
   function renderNeg(){
+    if (swiping) return;                                      // no repintar mientras el dedo está encima
     const pend = st.reqs.filter(r => r.status === "pendiente");
     $("reqs").innerHTML = `<h3>Solicitudes de sello ${pend.length ? `<span class="count">${pend.length}</span>` : ""}</h3>` +
-      (pend.length ? pend.map(r => `<div class="req"><div class="who"><b>☕ ${r.name} pide un sello</b><span>${ago(r.at)} · ${(st.stamps%10)}/10 sellos</span></div>
-        <button class="btn okb" data-ok="${r.id}">Aceptar</button><button class="btn no" data-no="${r.id}">Rechazar</button></div>`).join("")
+      (pend.length ? `<p class="swipehint">Desliza → para aceptar · ← para rechazar (o usa los botones)</p>` + pend.map(r => `<div class="reqwrap"><div class="under"><span class="a">✓ Aceptar</span><span class="r">Rechazar ✕</span></div>
+        <div class="req" data-id="${r.id}"><div class="who"><b>☕ ${r.name} pide un sello</b><span>${ago(r.at)} · ${(st.stamps%10)}/10 sellos</span></div>
+        <button class="btn okb" data-ok="${r.id}">Aceptar</button><button class="btn no" data-no="${r.id}">Rechazar</button></div></div>`).join("")
         : `<p class="muted" style="margin:6px 0 0;font-size:13.5px">No hay ninguna pendiente. Cuando un cliente escanee el QR del mostrador, aparecerá aquí y sonará un aviso.</p>`);
+    $("reqs").querySelectorAll(".reqwrap").forEach(bindSwipe);
     const L = [{ name:"Laura", ...st }, ...others];
     $("sCli").textContent = 128; $("sVis").textContent = 412 + L.reduce((a,c)=>a+c.visits,0); $("sRep").textContent = "64%";
     $("tbl").innerHTML = L.map(c=>`<tr><td></td><td>${c.stamps % 10}/10${c.free?" · 🎁":""}</td><td>${c.visits}</td><td>${c.last}</td></tr>`).join("");
@@ -344,41 +464,76 @@
       o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0+.5); });
     try{ navigator.vibrate && navigator.vibrate([200,80,200]); }catch(e){}
   }
-  function pushNote(m){
-    $("pushTxt").textContent = m; const p=$("push"); p.classList.add("show");
-    try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(e){}
-    clearTimeout(p._t); p._t=setTimeout(()=>p.classList.remove("show"),4200);
+  // Golpe seco y grave del sello (solo en el momento del sello: el sonido tiene que tener causa)
+  function thock(){
+    if (!ac) return;
+    try{ const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime;
+      o.type = "sine"; o.frequency.setValueAtTime(240, t0); o.frequency.exponentialRampToValueAtTime(90, t0 + .12);
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.5, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .16);
+      o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + .2); }catch(e){}
   }
-  $("push").onclick = ()=>$("push").classList.remove("show");
+  // Aviso tipo iOS: entra desde arriba con un muelle, se quita arrastrándolo hacia arriba (sale por donde entró)
+  const P = $("push"); let py = 0, pSp = null, pHide = 0;
+  const pOff = () => -(P.offsetHeight + 30);
+  const pSet = y => { py = y; P.style.transform = `translate(-50%, ${y}px)`; };
+  pSet(-400);
+  function pTo(to, v, done){ pSp && pSp.stop(); pSp = spring({ from:py, to, v:v||0, damping:1, response:.35, update:pSet, done }); }
+  function pushNote(m){
+    $("pushTxt").textContent = m;
+    if (py < pOff()) pSet(pOff());
+    pTo(0); try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(e){}
+    clearTimeout(pHide); pHide = setTimeout(() => pTo(pOff()), 4200);
+  }
+  const pDrag = drag(P, "y", {
+    start: () => { pSp && pSp.stop(); clearTimeout(pHide); return py; },
+    move: y => pSet(y > 0 ? rubber(y, 120) : y),               // hacia abajo cede cada vez menos
+    end: vel => { const land = py + project(vel);
+      if (land < pOff()/2) pTo(pOff(), vel); else { pTo(0, vel); pHide = setTimeout(() => pTo(pOff()), 3000); } }
+  });
+  P.addEventListener("click", () => { if (!pDrag.moved){ clearTimeout(pHide); pTo(pOff()); } });
 
   /* ---------- cliente: escanear el QR del mostrador ---------- */
-  let scanT = [];
+  let scanT = [], ovSp = null, ovP = 0;
+  // El escáner nace del botón que lo abre y vuelve a él al cerrarse (coherencia espacial)
+  function ovAnim(open, done){
+    const ov = $("scanOv"), b = $("scanCounter").getBoundingClientRect();
+    ov.style.transformOrigin = `${b.left + b.width/2}px ${b.top + b.height/2}px`;
+    const v = ovSp ? ovSp.v : 0; ovSp && ovSp.stop();
+    ovSp = spring({ from:ovP, to:open ? 1 : 0, v, damping:1, response:.3,
+      update:p => { ovP = p; ov.style.opacity = Math.max(0, Math.min(1, p)); ov.style.transform = `scale(${.6 + .4*p})`; },
+      done:() => { ov.style.transform = ""; done && done(); } });
+  }
+  function closeScan(){ scanT.forEach(clearTimeout); const hide = () => { if (ovP < .5) $("scanOv").hidden = true; };
+    ovAnim(false, hide); setTimeout(() => { ovSp && ovSp.stop(); ovP = 0; hide(); }, 500); }
   $("scanCounter").onclick = () => {
     if (myPending()) return;
-    $("scanOv").hidden = false; $("finder").classList.remove("ok"); $("scanTxt").textContent = "Apunta al QR del mostrador…";
+    $("scanOv").hidden = false; ovAnim(true); $("finder").classList.remove("ok"); $("scanTxt").textContent = "Apunta al QR del mostrador…";
     drawQR($("scanC"), "parapapa-mostrador");
     scanT.forEach(clearTimeout);
     scanT = [
       setTimeout(()=>{ $("finder").classList.add("ok"); $("scanTxt").textContent = "✓ Parapapa · sello pedido"; try{ navigator.vibrate && navigator.vibrate(80); }catch(e){} }, 1500),
-      setTimeout(async ()=>{ $("scanOv").hidden = true;
+      setTimeout(async ()=>{ closeScan();
         st.reqs = st.reqs.filter(r => r.status === "pendiente").concat([{ id:"r"+Date.now(), name:"Laura", at:Date.now(), status:"pendiente" }]).slice(-10);
         render(); toast("Sello pedido: espera a que lo confirmen en la barra"); await save();
         if (!online && $("vCli").hidden === false && !$("tabs").hidden) toast("En la demo: abre la pestaña Negocio y acéptalo"); }, 2200)
     ];
   };
-  $("scanX").onclick = () => { scanT.forEach(clearTimeout); $("scanOv").hidden = true; };
+  $("scanX").onclick = closeScan;
 
   /* ---------- negocio: aceptar o rechazar ---------- */
-  document.addEventListener("click", async e => {
-    const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]");
-    if (!ok && !no) return;
-    const r = st.reqs.find(x => x.id === (ok || no).dataset.ok || x.id === (ok || no).dataset.no);
+  async function decide(id, accept){
+    const r = st.reqs.find(x => x.id === id);
     if (!r || r.status !== "pendiente") return;
-    if (ok){ const before = st.free; addStamps(st, 1); r.status = "aceptada";
+    if (accept){ const before = st.free; addStamps(st, 1); r.status = "aceptada";
       aviso(st.free > before ? "🎉 ¡Tarjeta completa! Tu próximo café es gratis." : `+1 sello. Te faltan ${10 - st.stamps % 10} para el café gratis.`);
-      toast(`Sello sumado a ${r.name}`); }
+      toast(`Sello sumado a ${r.name}`); try{ navigator.vibrate && navigator.vibrate(30); }catch(e){} }
     else { r.status = "rechazada"; toast("Solicitud rechazada"); }
     render(); await save();
+  }
+  document.addEventListener("click", e => {
+    const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]");
+    if (!ok && !no) return;
+    decide(ok ? ok.dataset.ok : no.dataset.no, !!ok);
   });
 
   /* ---------- resto del panel ---------- */
