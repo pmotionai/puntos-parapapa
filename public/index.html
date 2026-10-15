@@ -214,6 +214,9 @@
     <div class="wallet" style="margin-top:10px">
       <button id="wHome">📲 Añadir a la pantalla de inicio</button>
     </div>
+    <div class="wallet" style="margin-top:8px">
+      <button class="g" id="pushCli" data-role="cliente">🔔 Activar avisos de sellos y ofertas</button>
+    </div>
 
     <div class="section">
       <h3>Tus premios</h3>
@@ -231,6 +234,9 @@
     <p class="muted">Tú no escaneas nada: el cliente escanea el QR del mostrador y tú solo aceptas.</p>
 
     <div class="reqs" id="reqs"></div>
+    <div class="wallet" style="margin:-4px 0 12px">
+      <button class="g" id="pushNeg" data-role="negocio">🔔 Avisarme en este móvil de cada solicitud</button>
+    </div>
 
     <div class="stats">
       <div class="stat"><b id="sCli">0</b><span>Clientes</span></div>
@@ -626,6 +632,33 @@
     }
     openSheet();                                               // iPhone y el resto: instrucciones paso a paso
   });
+
+  /* ---------- Notificaciones push (como una app: llegan con el móvil bloqueado) ---------- */
+  const b64u = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+  const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+  const lsSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
+  const pushOK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  function markPush(role){ const b = $(role === "negocio" ? "pushNeg" : "pushCli"); if (b){ b.textContent = role === "negocio" ? "🔔 Avisos de solicitudes activados en este móvil" : "🔔 Avisos activados"; b.disabled = true; } }
+  async function subscribe(role, test){
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub){ const key = await fetch("/api/vapid").then(r => { if (!r.ok) throw new Error("claves"); return r.text(); });
+      sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u(key) }); }
+    await fetch("/api/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ sub, role, test }) });
+    lsSet("pushRole", role); markPush(role);
+  }
+  async function enablePush(role){
+    if (isIOS && !standalone()){ toast("En iPhone, primero guarda la tarjeta en la pantalla de inicio y actívalos desde allí"); openSheet(); return; }
+    if (!pushOK){ toast("Este navegador no admite avisos. Prueba con Chrome o Safari"); return; }
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted"){ toast("Sin permiso no te podemos avisar. Puedes activarlo en los ajustes del navegador"); return; }
+    try{ await subscribe(role, true); toast("¡Hecho! Te llegará un aviso de prueba ahora mismo"); }
+    catch(e){ toast("No se han podido activar los avisos. Prueba otra vez en un momento"); }
+  }
+  $("pushCli").onclick = () => enablePush("cliente");
+  $("pushNeg").onclick = () => enablePush("negocio");
+  // Si ya tenía permiso, se vuelve a apuntar en cada visita (el servidor gratuito se reinicia y olvida)
+  if (pushOK && Notification.permission === "granted" && lsGet("pushRole")) subscribe(lsGet("pushRole"), false).catch(()=>{});
 
   applyMode(); render();
   setInterval(() => { if (!$("vNeg").hidden) renderNeg(); }, 5000);   // refresca «hace X s»

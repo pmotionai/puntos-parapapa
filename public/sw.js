@@ -1,6 +1,24 @@
 // Service worker mínimo: permite instalar la tarjeta como app y la abre aunque no haya cobertura.
 // La página y los iconos se guardan; /api/state siempre va a la red (los sellos son en directo).
-const CACHE = "parapapa-v1";
+const CACHE = "parapapa-v2";
+
+// Aviso push: llega vacío y aquí se pide el texto al servidor para este móvil
+self.addEventListener("push", e => {
+  e.waitUntil(self.registration.pushManager.getSubscription().then(sub =>
+    fetch("/api/pushmsg", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ endpoint: sub && sub.endpoint }) })
+      .then(r => r.json()).catch(() => ({ title:"Parapapa", body:"Tienes novedades en tu tarjeta ☕", url:"/#cliente" }))
+  ).then(m => self.registration.showNotification(m.title || "Parapapa", {
+    body:m.body, icon:"/icon-192.png", badge:"/icon-192.png", tag:"parapapa", renotify:true, vibrate:[60,40,60], data:{ url:m.url || "/#cliente" } })));
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/#cliente";
+  e.waitUntil(self.clients.matchAll({ type:"window", includeUncontrolled:true }).then(list => {
+    const w = list.find(c => new URL(c.url).origin === location.origin);
+    if (w){ w.navigate ? w.navigate(url).catch(()=>{}) : 0; return w.focus(); }
+    return self.clients.openWindow(url);
+  }));
+});
 const SHELL = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/icon-180.png"];
 
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
