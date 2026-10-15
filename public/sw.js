@@ -1,6 +1,6 @@
 // Service worker mínimo: permite instalar la tarjeta como app y la abre aunque no haya cobertura.
 // La página y los iconos se guardan; /api/state siempre va a la red (los sellos son en directo).
-const CACHE = "parapapa-v6";
+const CACHE = "parapapa-v7";
 
 // Aviso push: llega vacío y aquí se pide el texto al servidor para este móvil
 self.addEventListener("push", e => {

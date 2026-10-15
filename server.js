@@ -41,12 +41,12 @@ function push(endpoint){
   });
   req.on("error", e => console.log("push error", u.host, e.message)); req.end();
 }
-function notify(role, msg){ for (const [ep, s] of subs) if (s.role === role){ s.msg = msg; push(ep); } }
+function notify(role, msg){ for (const [ep, s] of subs) if (s.role === role){ s.msg = (msg.ask && !s.reviewed) ? { title:msg.title, body:msg.body + " ¿Te ha gustado? Toca y déjanos una reseña ⭐", url:"/?resena=1#cliente" } : msg; push(ep); } }
 // Compara el estado nuevo con el anterior: aviso nuevo → clientes; solicitud nueva → negocio
 function onNewState(prev, next){
   const pa = new Set(((prev && prev.avisos) || []).map(a => a.id)), pr = new Set(((prev && prev.reqs) || []).map(r => r.id));
   const avs = (next.avisos || []).filter(a => !pa.has(a.id));
-  if (prev && avs.length) { const m = avs[avs.length-1].m; notify("cliente", { title:/sello|café gratis|Tarjeta completa/i.test(m) ? "Tu tarjeta de cafés" : "Novedad de Parapapa", body:m, url:"/#cliente" }); }
+  if (prev && avs.length) { const m = avs[avs.length-1].m; const sello = /sello|café gratis|Tarjeta completa/i.test(m); notify("cliente", { title:sello ? "Tu tarjeta de cafés" : "Novedad de Parapapa", body:m, url:"/#cliente", ask:sello }); }
   const rqs = (next.reqs || []).filter(r => r.status === "pendiente" && !pr.has(r.id));
   if (prev && rqs.length) notify("negocio", { title:"Nueva solicitud de sello", body:`☕ ${rqs[0].name} pide un sello. Toca para aceptarlo.`, url:"/#negocio" });
 }
@@ -63,7 +63,7 @@ http.createServer((req, res) => {
   if (url.pathname === "/api/subscribe" && req.method === "POST") return readBody(req, b => {
     if (!b || !b.sub || !b.sub.endpoint || !/^https:\/\//.test(b.sub.endpoint)) return send(res, 400, { error:"sub" });
     const old = subs.get(b.sub.endpoint);
-    subs.set(b.sub.endpoint, { sub:b.sub, role:b.role === "negocio" ? "negocio" : "cliente", msg:old ? old.msg : null });
+    subs.set(b.sub.endpoint, { sub:b.sub, role:b.role === "negocio" ? "negocio" : "cliente", reviewed:!!b.reviewed, msg:old ? old.msg : null });
     console.log("subscribe", b.role, new URL(b.sub.endpoint).host, "total", subs.size);
     if (b.test) { subs.get(b.sub.endpoint).msg = { title:"Avisos activados", body:"Te avisaremos de tus sellos y ofertas ☕", url:b.role === "negocio" ? "/#negocio" : "/#cliente" }; push(b.sub.endpoint); }
     send(res, 200, { ok:true });

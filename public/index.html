@@ -309,8 +309,19 @@
     </div>
 
     <div class="box">
-      <h3 style="margin:0 0 10px;font-family:Fraunces,serif;font-weight:500">Sin móvil: sumar a mano</h3>
+      <h3 style="margin:0 0 4px;font-family:Fraunces,serif;font-weight:500">Clientes sin móvil</h3>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Para quien no usa el móvil (por ejemplo, gente mayor): lo buscas por nombre o teléfono y le sumas el sello tú.</p>
+      <input id="findQ" type="search" placeholder="Buscar por nombre o teléfono…" autocomplete="off" style="margin-bottom:8px">
       <div class="row"><select id="who"></select><button class="btn" id="addStamp">+1 sello</button></div>
+      <button class="btn light" id="newCliBtn" style="width:100%;margin-top:10px">＋ Añadir cliente nuevo</button>
+      <form id="newCli" hidden style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <input id="ncName" placeholder="Nombre (ej.: Josep Mas)" required autocomplete="off">
+        <input id="ncTel" type="tel" inputmode="tel" placeholder="Teléfono (opcional, para buscarlo)" autocomplete="off">
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input id="ncOk" type="checkbox" style="width:auto;margin-top:3px"> Acepta que le avisemos de ofertas (por SMS o al pasar por la barra)</label>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input id="ncFirst" type="checkbox" checked style="width:auto;margin-top:3px"> Sumarle ya su primer sello</label>
+        <div class="row"><button type="button" class="btn light" id="ncCancel">Cancelar</button><button class="btn" type="submit" style="flex:1">Dar de alta</button></div>
+      </form>
+      <p class="free" id="ncDone" hidden></p>
     </div>
 
     <div class="box">
@@ -404,9 +415,9 @@
   const START = { stamps:6, free:0, visits:14, last:"Hoy", avisos:[{ id:1, m:"Te faltan 4 cafés para el siguiente gratis 🎁" }], reqs:[] };
   let st = clone(START);
   const others = [
-    { name:"Marc", stamps:9, free:0, visits:21, last:"Ayer" },
-    { name:"Núria", stamps:3, free:0, visits:7, last:"Hace 3 días" },
-    { name:"Jordi", stamps:1, free:0, visits:2, last:"Hace 34 días" },
+    { name:"Marc", tel:"612345678", stamps:9, free:0, visits:21, last:"Ayer" },
+    { name:"Núria", tel:"699112233", stamps:3, free:0, visits:7, last:"Hace 3 días" },
+    { name:"Jordi", tel:"937501122", stamps:1, free:0, visits:2, last:"Hace 34 días" },
     { name:"Anna", stamps:8, free:0, visits:18, last:"Hoy" },
     { name:"Pol", stamps:4, free:0, visits:9, last:"Hace 12 días" },
   ];
@@ -477,10 +488,14 @@
     rcT = setTimeout(() => { if (!$("vCli").hidden && RC.hidden){ RC.hidden = false; rcSet(RC.offsetHeight + 40); rcTo(0); } }, 1800);   // después de que caiga el sello
   }
   $("revNo").onclick = () => { ls.set("revAfter", String(st.stamps + 5)); hideReview(); };
-  $("revYes").addEventListener("click", () => { ls.set("revDone", "1"); hideReview(); });
-  $("revLink2").addEventListener("click", () => ls.set("revDone", "1"));
+  $("revYes").addEventListener("click", () => { ls.set("revDone", "1"); hideReview(); reSub(); });
+  $("revLink2").addEventListener("click", () => { ls.set("revDone", "1"); reSub(); });
+  function reSub(){ try{ if (Notification.permission === "granted" && ls.get("pushRole")) subscribe(ls.get("pushRole"), false).catch(()=>{}); }catch(e){} }
   drag(RC, "y", { start:() => { rcSp && rcSp.stop(); return rcY; }, move:y => rcSet(y < 0 ? -rubber(-y, 60) : y),
     end:v => { if (rcY + project(v) > RC.offsetHeight/2){ ls.set("revAfter", String(st.stamps + 5)); hideReview(v); } else rcTo(0, v); } });
+  try{ const o = JSON.parse(ls.get("others") || "null"); if (Array.isArray(o) && o.length) others.splice(0, others.length, ...o); }catch(e){}
+  const fromPush = /[?&]resena=1/.test(location.search);
+  if (fromPush) history.replaceState(null, "", location.pathname + location.hash);
   let shown = -1;
   const myPending = () => st.reqs.find(r => r.status === "pendiente");
   function renderCli(){
@@ -491,7 +506,7 @@
     shown = filled;
     // ¿Ha recibido un sello desde la última vez que la vio? (también si la abre desde el aviso del móvil)
     const seen = +ls.get("seenStamps") || 0;
-    if (seen && st.stamps > seen) maybeAskReview(st.stamps);
+    if ((seen && st.stamps > seen) || (fromPush && !maybeAskReview.done)) { maybeAskReview.done = true; maybeAskReview(st.stamps); }
     if (st.stamps !== seen) ls.set("seenStamps", String(st.stamps));
     $("progress").textContent = st.free>0 ? `¡Tienes ${st.free} café${st.free>1?"s":""} gratis! Pídelo en la barra 🎉` : `Te faltan ${10-inCard} cafés para el siguiente gratis`;
     $("ptsTxt").textContent = `${st.stamps} sellos`;
@@ -540,9 +555,12 @@
     $("sCli").textContent = 128; $("sVis").textContent = 412 + L.reduce((a,c)=>a+c.visits,0); $("sRep").textContent = "64%";
     $("tbl").innerHTML = L.map(c=>`<tr><td></td><td>${c.stamps % 10}/10${c.free?" · 🎁":""}</td><td>${c.visits}</td><td>${c.last}</td></tr>`).join("");
     [...$("tbl").querySelectorAll("tr")].forEach((tr,i)=>{ tr.firstChild.textContent = L[i].name; });
-    const sel=$("who"), v=sel.value;
-    sel.innerHTML = L.map((c,i)=>`<option value="${i}"></option>`).join(""); [...sel.options].forEach((o,i)=>{ o.textContent = L[i].name; });
-    if (v) sel.value = v;
+    const sel=$("who"), v=sel.value, q=($("findQ").value||"").trim().toLowerCase().replace(/\s/g,"");
+    const idx = L.map((c,i)=>i).filter(i => !q || (L[i].name.toLowerCase().replace(/\s/g,"") + (L[i].tel||"")).includes(q));
+    sel.innerHTML = idx.map(i=>`<option value="${i}"></option>`).join("") || `<option value="" disabled selected>Nadie con «${q}»</option>`;
+    [...sel.options].forEach((o,k)=>{ if (idx[k] !== undefined) o.textContent = L[idx[k]].name + (L[idx[k]].tel ? ` · ${L[idx[k]].tel}` : "") + (L[idx[k]].card ? ` · nº ${L[idx[k]].card}` : ""); });
+    if (v && idx.includes(+v)) sel.value = v;
+    $("sCli").textContent = 128 + others.filter(c => c.nuevo).length;
   }
   function render(){ renderCli(); renderNeg(); }
 
@@ -642,10 +660,30 @@
   });
 
   /* ---------- resto del panel ---------- */
+  /* ---------- alta de clientes sin móvil ---------- */
+  const saveOthers = () => ls.set("others", JSON.stringify(others));
+  $("findQ").addEventListener("input", () => renderNeg());
+  $("newCliBtn").onclick = () => { $("newCli").hidden = false; $("newCliBtn").hidden = true; $("ncDone").hidden = true; $("ncName").focus(); };
+  $("ncCancel").onclick = () => { $("newCli").hidden = true; $("newCliBtn").hidden = false; };
+  $("newCli").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("ncName").value.trim(), tel = $("ncTel").value.replace(/[^\d+]/g,"");
+    if (!name) return toast("Escribe su nombre");
+    const card = String(130 + others.filter(c => c.nuevo).length).padStart(4, "0");        // número para su tarjetita física
+    const c = { name, tel, card, ofertas:$("ncOk").checked, stamps:0, free:0, visits:0, last:"Hoy", nuevo:true };
+    if ($("ncFirst").checked) addStamps(c, 1);
+    others.push(c); saveOthers();
+    $("newCli").reset(); $("ncFirst").checked = true; $("newCli").hidden = true; $("newCliBtn").hidden = false;
+    $("findQ").value = ""; renderNeg(); $("who").value = String(others.length);           // queda seleccionado
+    $("ncDone").hidden = false;
+    $("ncDone").textContent = `✓ ${name} dado de alta · Tarjeta nº ${card}${c.stamps ? " · 1 sello" : ""}. Apunta el número en su tarjetita de cartón y la próxima vez búscalo por nombre o teléfono.`;
+    toast(`${name} dado de alta`);
+  });
   $("addStamp").onclick = async()=>{
+    if ($("who").value === "") return toast("Busca primero al cliente");
     const i=+$("who").value;
     if (i===0){ const before=st.free; addStamps(st,1); aviso(st.free>before ? "🎉 ¡Tarjeta completa! Tu próximo café es gratis." : `+1 sello. Te faltan ${10-st.stamps%10} para el café gratis.`); render(); toast("Sello sumado a Laura"); await save(); }
-    else { addStamps(others[i-1],1); render(); toast(`Sello sumado a ${others[i-1].name}`); }
+    else { addStamps(others[i-1],1); saveOthers(); render(); toast(`Sello sumado a ${others[i-1].name}`); }
   };
   $("send").onclick = async()=>{ const m=$("msg").value.trim(); if(!m) return toast("Escribe el aviso"); aviso(m); render(); toast(`Aviso enviado ${$("seg").selectedOptions[0].textContent.toLowerCase()}`); await save(); };
   const RESET_TXT = "Reiniciar la demo (Laura vuelve a 6 sellos)"; let armed = false;
@@ -734,7 +772,7 @@
     let sub = await reg.pushManager.getSubscription();
     if (!sub){ const key = await fetch("/api/vapid").then(r => { if (!r.ok) throw new Error("claves"); return r.text(); });
       sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u(key) }); }
-    await fetch("/api/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ sub, role, test }) });
+    await fetch("/api/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ sub, role, test, reviewed: !!ls.get("revDone") }) });
     lsSet("pushRole", role); markPush(role);
   }
   async function enablePush(role){
@@ -775,7 +813,7 @@
           else if (newAv.length) pushNote(newAv[newAv.length-1].m);
         }
       }
-      if (st.stamps < prev.stamps) shown = -1;
+      if (st.stamps < prev.stamps){ shown = -1; ["revDone","revAfter","seenStamps"].forEach(k => { try{ localStorage.removeItem(k); }catch(e){} }); }
       firstLoad = false; render();
     }catch(e){ online = false; }
   }
