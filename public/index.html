@@ -658,6 +658,7 @@
   const b64u = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
   const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
+  const pushOn = role => pushOK && Notification.permission === "granted" && lsGet("pushRole") === role;
   const pushOK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   function markPush(role){ const b = $(role === "negocio" ? "pushNeg" : "pushCli"); if (b){ b.textContent = role === "negocio" ? "🔔 Avisos de solicitudes activados en este móvil" : "🔔 Avisos activados"; b.disabled = true; } }
   async function subscribe(role, test){
@@ -696,8 +697,8 @@
       const prev = st; ver = j.ver; st = j.state; st.reqs = st.reqs || []; st.avisos = st.avisos || [];
       if (!firstLoad){
         const newPend = st.reqs.filter(x => x.status === "pendiente" && !prev.reqs.some(p => p.id === x.id));
-        if (newPend.length && mode !== "cliente" && !$("vNeg").hidden) ding();
-        if (mode !== "negocio" && !$("vCli").hidden){
+        if (newPend.length && mode !== "cliente" && !$("vNeg").hidden && !pushOn("negocio")) ding();
+        if (mode !== "negocio" && !$("vCli").hidden && !pushOn("cliente")){   // con avisos del móvil activados, solo llega el del móvil
           const acc = st.reqs.find(x => x.status === "aceptada" && prev.reqs.some(p => p.id === x.id && p.status === "pendiente"));
           const rej = st.reqs.find(x => x.status === "rechazada" && prev.reqs.some(p => p.id === x.id && p.status === "pendiente"));
           const newAv = st.avisos.filter(a => !prev.avisos.some(p => p.id === a.id));

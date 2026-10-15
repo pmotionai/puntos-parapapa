@@ -46,7 +46,7 @@ function notify(role, msg){ for (const [ep, s] of subs) if (s.role === role){ s.
 function onNewState(prev, next){
   const pa = new Set(((prev && prev.avisos) || []).map(a => a.id)), pr = new Set(((prev && prev.reqs) || []).map(r => r.id));
   const avs = (next.avisos || []).filter(a => !pa.has(a.id));
-  if (prev && avs.length) notify("cliente", { title:"Parapapa", body:avs[avs.length-1].m, url:"/#cliente" });
+  if (prev && avs.length) { const m = avs[avs.length-1].m; notify("cliente", { title:/sello|café gratis|Tarjeta completa/i.test(m) ? "Tu tarjeta de cafés" : "Novedad de Parapapa", body:m, url:"/#cliente" }); }
   const rqs = (next.reqs || []).filter(r => r.status === "pendiente" && !pr.has(r.id));
   if (prev && rqs.length) notify("negocio", { title:"Nueva solicitud de sello", body:`☕ ${rqs[0].name} pide un sello. Toca para aceptarlo.`, url:"/#negocio" });
 }
@@ -65,7 +65,7 @@ http.createServer((req, res) => {
     const old = subs.get(b.sub.endpoint);
     subs.set(b.sub.endpoint, { sub:b.sub, role:b.role === "negocio" ? "negocio" : "cliente", msg:old ? old.msg : null });
     console.log("subscribe", b.role, new URL(b.sub.endpoint).host, "total", subs.size);
-    if (b.test) { subs.get(b.sub.endpoint).msg = { title:"Parapapa", body:"¡Avisos activados! Te avisaremos de tus sellos y ofertas ☕", url:b.role === "negocio" ? "/#negocio" : "/#cliente" }; push(b.sub.endpoint); }
+    if (b.test) { subs.get(b.sub.endpoint).msg = { title:"Avisos activados", body:"Te avisaremos de tus sellos y ofertas ☕", url:b.role === "negocio" ? "/#negocio" : "/#cliente" }; push(b.sub.endpoint); }
     send(res, 200, { ok:true });
   });
   if (url.pathname === "/api/pushmsg" && req.method === "POST") return readBody(req, b => {
