@@ -203,6 +203,28 @@
   .counterqr{display:flex; gap:12px; align-items:center; margin-top:10px;}
   .counterqr canvas{width:84px; height:84px; background:#fff; border-radius:10px; padding:6px; border:1px solid var(--line); flex:none;}
   @media (prefers-reduced-motion:reduce){ .waitbox .dot{animation:none;} .finder .line{animation:none; top:50%;} }
+  /* ===== v2: registro, privacidad, PIN del negocio y QR real ===== */
+  .reg{display:flex; flex-direction:column; gap:12px; margin-top:6px;}
+  .reg .brand{background:#23925D; border-radius:22px; padding:22px 18px; text-align:center; box-shadow:0 14px 30px rgba(35,146,93,.28);}
+  .reg .brand img{height:64px; width:auto;}
+  .reg .brand p{color:#F4E7C6; margin:10px 0 0; font-size:15px;}
+  .reg form{display:flex; flex-direction:column; gap:10px;}
+  .reg label.chk{display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.35;}
+  .reg label.chk input{width:22px; height:22px; flex:none; margin-top:1px; accent-color:var(--brown);}
+  .reg .big{padding:15px; font-size:17px; border-radius:14px;}
+  .linkbtn{background:none; border:none; color:var(--brown-2); font:inherit; font-size:14px; text-decoration:underline; cursor:pointer; padding:6px 0;}
+  .err{color:#B3261E; font-size:14px; margin:0;}
+  .legal{font-size:12.5px; color:var(--soft); line-height:1.45;}
+  .privsheet{max-height:62vh; overflow:auto; touch-action:pan-y; -webkit-overflow-scrolling:touch;}
+  .privsheet h4{margin:14px 0 4px; font-size:15px;}
+  .privsheet p,.privsheet li{font-size:14px; line-height:1.5; margin:0 0 6px;}
+  .cardno{font-size:11px; letter-spacing:.14em; opacity:.85; margin-top:10px; color:var(--white);}
+  .counterqr img{width:96px; height:96px; background:#fff; border-radius:10px; padding:6px; border:1px solid var(--line); flex:none; image-rendering:pixelated;}
+  .ctable td small{display:block; color:var(--soft); font-size:11.5px;}
+  .tag{display:inline-block; font-size:10.5px; padding:2px 7px; border-radius:99px; background:var(--beige); margin-left:4px; vertical-align:middle;}
+  .pin{max-width:280px; margin:30px auto; text-align:center; display:flex; flex-direction:column; gap:10px;}
+  .pin input{text-align:center; font-size:24px!important; letter-spacing:.4em;}
+  .footer-links{display:flex; flex-wrap:wrap; gap:4px 14px; justify-content:center; margin-top:26px;}
 </style>
 </head>
 <body>
@@ -213,10 +235,34 @@
   </div>
   <p class="live" id="live" hidden>● Conectado en directo</p>
 
-  <!-- ===== CLIENTE ===== -->
-  <section id="vCli">
+  <!-- ===== CLIENTE: registro (solo la primera vez) ===== -->
+  <section id="vReg" hidden>
+    <div class="reg">
+      <div class="brand"><img src="/logo.png" alt="Fleca Parapapa · Vilassar de Mar"><p>Tu tarjeta de cafés. Cada café, un sello; al décimo, invitamos nosotros ☕</p></div>
+      <form id="regForm" novalidate>
+        <h1 style="font-size:24px;margin:4px 0 0">Hazte tu tarjeta</h1>
+        <p class="muted">Solo la primera vez. Después, al escanear el QR del mostrador, la tarjeta ya sabrá que eres tú.</p>
+        <input id="rName" placeholder="Tu nombre" autocomplete="given-name" maxlength="40">
+        <input id="rTel" type="tel" inputmode="tel" placeholder="Tu móvil (para recuperar tu tarjeta)" autocomplete="tel" maxlength="16">
+        <label class="chk"><input type="checkbox" id="rPriv"><span>He leído y acepto la <button type="button" class="linkbtn" data-priv style="padding:0">política de privacidad</button>.</span></label>
+        <label class="chk"><input type="checkbox" id="rOf"><span>Quiero recibir ofertas y novedades de Parapapa (opcional; puedes darte de baja cuando quieras).</span></label>
+        <p class="err" id="rErr" hidden></p>
+        <button class="btn big" type="submit" id="rGo">Crear mi tarjeta</button>
+        <p class="legal">Responsable: Parapapa (Vilassar de Mar). Finalidad: gestionar tu tarjeta de puntos y, si lo aceptas, enviarte ofertas. Derechos: acceso, rectificación, supresión y oposición escribiendo a Parapapa. Más información en la <button type="button" class="linkbtn" data-priv style="padding:0;font-size:12.5px">política de privacidad</button>.</p>
+      </form>
+      <button class="linkbtn" id="toLogin">¿Ya tienes tarjeta? Entra con tu teléfono</button>
+      <form id="loginForm" hidden style="display:flex;flex-direction:column;gap:10px">
+        <input id="lTel" type="tel" inputmode="tel" placeholder="Tu móvil" autocomplete="tel" maxlength="16">
+        <p class="err" id="lErr" hidden></p>
+        <button class="btn big" type="submit">Entrar</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===== CLIENTE: su tarjeta ===== -->
+  <section id="vCli" hidden>
     <div class="hello">
-      <div><h1>Hola, Laura ☕</h1>
+      <div><h1 id="hi">Hola ☕</h1>
       <p class="muted">Tu tarjeta de Parapapa (Vilassar de Mar), siempre en el móvil.</p></div>
       <a class="igmini" id="igTop" href="https://www.instagram.com/parapapa_vdm/" target="_blank" rel="noopener" aria-label="Síguenos en Instagram">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
@@ -231,6 +277,7 @@
       </div>
       <div class="stamps" id="stamps"></div>
       <div class="progress" id="progress"></div>
+      <div class="cardno" id="cardNo"></div>
     </div>
 
     <button class="scanbtn" id="scanCounter">
@@ -258,12 +305,17 @@
     <div class="section follow">
       <a class="igbtn" id="igLink" href="https://www.instagram.com/parapapa_vdm/" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-        <span><b>Síguenos en Instagram</b><br><small id="igHandle">@parapapa_vdm · novedades y ofertas</small></span>
+        <span><b>Síguenos en Instagram</b><br><small>@parapapa_vdm · novedades y ofertas</small></span>
       </a>
       <a class="igbtn rev" href="https://www.google.com/maps/search/?api=1&amp;query=Parapapa%20Vilassar%20de%20Mar&amp;query_place_id=ChIJwU0x_g61pBIRbqPl_FxdV5o" target="_blank" rel="noopener" id="revLink2">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>
         <span><b>Déjanos una reseña en Google</b><br><small>Se abre en Google Maps · toca «Escribir una reseña»</small></span>
       </a>
+    </div>
+    <div class="footer-links">
+      <button class="linkbtn" data-priv>Privacidad</button>
+      <button class="linkbtn" id="ofToggle">Ofertas: —</button>
+      <button class="linkbtn" id="delMe">Borrar mis datos</button>
     </div>
   </section>
 
@@ -276,6 +328,17 @@
   </div>
 
   <!-- ===== NEGOCIO ===== -->
+  <section id="vPin" hidden>
+    <form class="pin" id="pinForm">
+      <h1 style="font-size:24px">Panel de Parapapa</h1>
+      <p class="muted">Introduce el PIN del negocio para ver tus clientes.</p>
+      <input id="pinIn" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="····">
+      <p class="err" id="pinErr" hidden>PIN incorrecto</p>
+      <button class="btn big" type="submit" style="padding:14px">Entrar</button>
+      <p class="legal">Demo: el PIN es 2580.</p>
+    </form>
+  </section>
+
   <section id="vNeg" hidden>
     <h1>Parapapa · Panel</h1>
     <p class="muted">Tú no escaneas nada: el cliente escanea el QR del mostrador y tú solo aceptas.</p>
@@ -292,10 +355,11 @@
     </div>
 
     <div class="box">
-      <h3 style="margin:0 0 10px;font-family:Fraunces,serif;font-weight:500">Enviar aviso</h3>
+      <h3 style="margin:0 0 4px;font-family:Fraunces,serif;font-weight:500">Enviar aviso</h3>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Solo les llega a los clientes que aceptaron recibir ofertas (<b id="sOf">0</b>).</p>
       <select id="seg" style="margin-bottom:8px">
-        <option value="todos">A todos los clientes</option>
-        <option value="dormidos">A los que no vienen hace 30 días</option>
+        <option value="todos">A todos (los que aceptaron ofertas)</option>
+        <option value="dormidos">A los que no vienen desde hace 30 días</option>
         <option value="top">A los 10 mejores clientes</option>
       </select>
       <textarea id="msg" rows="2">🥐 Domingo de churros: doble sello con chocolate hasta las 12:00.</textarea>
@@ -304,20 +368,21 @@
 
     <div class="box">
       <h3 style="margin:0 0 6px;font-family:Fraunces,serif;font-weight:500">Tu QR del mostrador</h3>
-      <div class="counterqr"><canvas id="counterQr" width="168" height="168" aria-label="QR del mostrador"></canvas>
-        <p class="muted" style="margin:0;font-size:13px">Este QR va pegado junto a la caja (o en la pantallita del cliente). Siempre es el mismo: si alguien lo escanea desde casa, la solicitud te llega y la puedes rechazar.</p></div>
+      <div class="counterqr"><img id="counterQr" alt="QR del mostrador de Parapapa">
+        <p class="muted" style="margin:0;font-size:13px">Imprímelo y pégalo junto a la caja. Siempre es el mismo: el cliente lo escanea con la cámara, su tarjeta sabe quién es y te llega la solicitud. Pruébalo: escanéalo con tu móvil.</p></div>
     </div>
 
     <div class="box">
       <h3 style="margin:0 0 4px;font-family:Fraunces,serif;font-weight:500">Clientes sin móvil</h3>
-      <p class="muted" style="margin:0 0 10px;font-size:13px">Para quien no usa el móvil (por ejemplo, gente mayor): lo buscas por nombre o teléfono y le sumas el sello tú.</p>
-      <input id="findQ" type="search" placeholder="Buscar por nombre o teléfono…" autocomplete="off" style="margin-bottom:8px">
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Para quien no usa el móvil (por ejemplo, gente mayor): lo buscas por nombre, teléfono o nº de tarjeta y le sumas el sello tú.</p>
+      <input id="findQ" type="search" placeholder="Buscar por nombre, teléfono o nº…" autocomplete="off" style="margin-bottom:8px">
       <div class="row"><select id="who"></select><button class="btn" id="addStamp">+1 sello</button></div>
       <button class="btn light" id="newCliBtn" style="width:100%;margin-top:10px">＋ Añadir cliente nuevo</button>
       <form id="newCli" hidden style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
-        <input id="ncName" placeholder="Nombre (ej.: Josep Mas)" required autocomplete="off">
-        <input id="ncTel" type="tel" inputmode="tel" placeholder="Teléfono (opcional, para buscarlo)" autocomplete="off">
-        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input id="ncOk" type="checkbox" style="width:auto;margin-top:3px"> Acepta que le avisemos de ofertas (por SMS o al pasar por la barra)</label>
+        <input id="ncName" placeholder="Nombre (ej.: Josep Mas)" autocomplete="off" maxlength="40">
+        <input id="ncTel" type="tel" inputmode="tel" placeholder="Teléfono (opcional, para buscarlo)" autocomplete="off" maxlength="16">
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input id="ncPriv" type="checkbox" style="width:auto;margin-top:3px"> Le he informado de la política de privacidad y está de acuerdo</label>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input id="ncOk" type="checkbox" style="width:auto;margin-top:3px"> Acepta recibir ofertas</label>
         <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px"><input id="ncFirst" type="checkbox" checked style="width:auto;margin-top:3px"> Sumarle ya su primer sello</label>
         <div class="row"><button type="button" class="btn light" id="ncCancel">Cancelar</button><button class="btn" type="submit" style="flex:1">Dar de alta</button></div>
       </form>
@@ -326,14 +391,15 @@
 
     <div class="box">
       <h3 style="margin:0 0 6px;font-family:Fraunces,serif;font-weight:500">Clientes</h3>
-      <table><thead><tr><th>Cliente</th><th>Sellos</th><th>Visitas</th><th>Última</th></tr></thead><tbody id="tbl"></tbody></table>
-      <p class="muted" style="margin-top:8px;font-size:12px">Datos de ejemplo.</p>
+      <table class="ctable"><thead><tr><th>Cliente</th><th>Sellos</th><th>Visitas</th><th>Última</th></tr></thead><tbody id="tbl"></tbody></table>
+      <p class="muted" id="noCli" style="margin-top:8px;font-size:13px">Aún no hay clientes. Se apuntan solos al escanear el QR, o los das de alta tú aquí arriba.</p>
     </div>
-    <button class="resetbtn" id="reset">Reiniciar la demo (Laura vuelve a 6 sellos)</button>
+    <button class="resetbtn" id="reset">Reiniciar la demo (borra todos los clientes)</button>
+    <button class="resetbtn" id="logoutNeg" style="margin-top:4px">Salir del panel</button>
   </section>
 </div>
 
-<!-- El cliente escanea el QR del mostrador -->
+<!-- El cliente escanea el QR del mostrador (simulación dentro de la app) -->
 <div class="ov dark" id="scanOv" hidden>
   <button class="close" id="scanX" aria-label="Cerrar">✕</button>
   <div style="width:100%">
@@ -345,25 +411,41 @@
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden>
   <div class="grip" aria-hidden="true"></div>
-  <h3 id="sheetT">Guarda tu tarjeta en el móvil</h3>
-  <p class="muted" id="sheetSub">Así la abres como una app, sin descargar nada.</p>
-  <ol class="steps" id="sheetSteps"></ol>
-  <div class="appicon"><img src="/icon-180.png" alt=""><div><b>Parapapa</b><br><span class="muted" style="font-size:13px">Aparecerá así en tu pantalla de inicio</span></div></div>
+  <div id="sheetInstall">
+    <h3 id="sheetT">Guarda tu tarjeta en el móvil</h3>
+    <p class="muted" id="sheetSub">Así la abres como una app, sin descargar nada.</p>
+    <ol class="steps" id="sheetSteps"></ol>
+    <div class="appicon"><img src="/icon-180.png" alt=""><div><b>Parapapa</b><br><span class="muted" style="font-size:13px">Aparecerá así en tu pantalla de inicio</span></div></div>
+  </div>
+  <div id="sheetPriv" class="privsheet" hidden>
+    <h3>Política de privacidad</h3>
+    <p class="muted">Tarjeta de cafés de Parapapa · última actualización: octubre de 2026</p>
+    <h4>Quién trata tus datos</h4><p>Parapapa (Fleca Parapapa), Av. Montevideo 133, 08340 Vilassar de Mar. NIF: [pendiente]. Contacto: en la barra o por Instagram @parapapa_vdm.</p>
+    <h4>Qué datos</h4><p>Tu nombre, tu teléfono, tus sellos y visitas y, si los activas, los avisos del móvil. No pedimos nada más.</p>
+    <h4>Para qué</h4><p>Para gestionar tu tarjeta de puntos y tus premios. Y solo si marcas la casilla, para enviarte ofertas y novedades de Parapapa.</p>
+    <h4>Base legal</h4><p>Tu consentimiento al crear la tarjeta (y uno aparte, opcional, para las ofertas). Puedes retirarlo cuando quieras.</p>
+    <h4>Quién más los ve</h4><p>Nadie más. El servicio lo presta sírvelo (PmotionIA) como encargado del tratamiento, con servidores en la Unión Europea (Frankfurt). No vendemos ni cedemos tus datos.</p>
+    <h4>Cuánto tiempo</h4><p>Mientras tengas la tarjeta. Si no la usas en 2 años, la borramos.</p>
+    <h4>Tus derechos</h4><p>Acceder, corregir, borrar, oponerte y llevarte tus datos. Puedes borrarlo todo tú mismo con «Borrar mis datos», al final de tu tarjeta, o pedirlo en la barra. Si crees que no lo hacemos bien, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>
+  </div>
   <button class="btn ok" id="sheetOk">Entendido</button>
 </div>
 <div class="push" id="push" role="status"><div class="ic">☕</div><div><small>Parapapa · ahora</small><p id="pushTxt"></p></div><i class="grab" aria-hidden="true"></i></div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (function(){
   "use strict";
   const $ = id => document.getElementById(id);
-  const clone = o => JSON.parse(JSON.stringify(o));
-  const toast = t => { const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2600); };
+  const toast = t => { const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2800); };
+  const ls = { get:k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} }, del:k=>{ try{ localStorage.removeItem(k); }catch(e){} } };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  const api = (p, body, pin) => fetch(p, { method: body ? "POST" : "GET", cache:"no-store", headers: Object.assign({ "Content-Type":"application/json" }, pin ? { "x-pin":pin } : {}), body: body ? JSON.stringify(body) : undefined })
+    .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok){ const e = new Error(j.error || "Error"); e.status = r.status; e.body = j; throw e; } return j; });
 
   /* ---------- física (skill apple-design): muelles interrumpibles, inercia y efecto goma ---------- */
   const RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // Muelle con los dos parámetros de Apple: damping (1 = sin rebote) y response (s). Empieza en el valor actual y hereda velocidad.
   function spring(o){
     const k = Math.pow(2*Math.PI/o.response, 2), c = 4*Math.PI*o.damping/o.response;
     const range = Math.max(Math.abs(o.to - o.from), 1), eps = range * 0.002;
@@ -380,13 +462,12 @@
     }
     raf = requestAnimationFrame(step); return h;
   }
-  const project = (v, d=.998) => (v/1000) * d / (1 - d);                       // a dónde va el gesto
-  const rubber = (over, dim, c=.55) => (over*dim*c) / (dim + c*Math.abs(over)); // resistencia en los bordes
-  // Arrastre con Pointer Events: sigue al dedo 1:1, umbral de 10 px y velocidad al soltar.
+  const project = (v, d=.998) => (v/1000) * d / (1 - d);
+  const rubber = (over, dim, c=.55) => (over*dim*c) / (dim + c*Math.abs(over));
   function drag(el, axis, h){
     let id = null, start = 0, other = 0, base = 0, hist = [], locked = false, moved = false;
     el.addEventListener("pointerdown", e => {
-      if (e.target.closest("button")) return;
+      if (e.target.closest("button,a,input,label,.privsheet")) return;
       id = e.pointerId; start = axis === "x" ? e.clientX : e.clientY; other = axis === "x" ? e.clientY : e.clientX;
       base = h.start(); hist = [{ p:start, t:e.timeStamp }]; locked = false; moved = false;
     });
@@ -394,7 +475,7 @@
       if (e.pointerId !== id) return;
       const p = axis === "x" ? e.clientX : e.clientY, q = axis === "x" ? e.clientY : e.clientX;
       if (!locked){
-        if (Math.abs(q - other) > 10 && Math.abs(q - other) > Math.abs(p - start)){ id = null; h.cancel && h.cancel(); return; } // era scroll
+        if (Math.abs(q - other) > 10 && Math.abs(q - other) > Math.abs(p - start)){ id = null; h.cancel && h.cancel(); return; }
         if (Math.abs(p - start) < 10) return;
         locked = true; moved = true; try{ el.setPointerCapture(id); }catch(err){} h.lock && h.lock();
       }
@@ -411,50 +492,44 @@
     return { get moved(){ return moved; } };
   }
 
-  // Laura es la clienta de la demo; "reqs" son las solicitudes de sello que llegan a la barra.
-  const START = { stamps:6, free:0, visits:14, last:"Hoy", avisos:[{ id:1, m:"Te faltan 4 cafés para el siguiente gratis 🎁" }], reqs:[] };
-  let st = clone(START);
-  const others = [
-    { name:"Marc", tel:"612345678", stamps:9, free:0, visits:21, last:"Ayer" },
-    { name:"Núria", tel:"699112233", stamps:3, free:0, visits:7, last:"Hace 3 días" },
-    { name:"Jordi", tel:"937501122", stamps:1, free:0, visits:2, last:"Hace 34 días" },
-    { name:"Anna", stamps:8, free:0, visits:18, last:"Hoy" },
-    { name:"Pol", stamps:4, free:0, visits:9, last:"Hace 12 días" },
-  ];
   const REWARDS = [ { at:25, txt:"Churros con chocolate" }, { at:50, txt:"Porción de pastel de Guinness + chai latte" } ];
+  const ago = t => { if (!t) return "—"; const s = Math.max(0, Math.round((Date.now()-t)/1000)); if (s < 60) return `hace ${s} s`; if (s < 3600) return `hace ${Math.round(s/60)} min`; if (s < 86400) return `hace ${Math.round(s/3600)} h`; return `hace ${Math.round(s/86400)} días`; };
 
-  /* ---------- vista: #cliente, #negocio o las dos con pestañas ---------- */
-  let mode = "";
+  /* ---------- vistas: #cliente, #negocio o las dos con pestañas ---------- */
+  let mode = "", tab = "cli";
   let indX = null, indW = null, indSX = null, indSW = null;
   function moveInd(btn, instant){
     const ind = $("tabInd"); if (!btn.offsetWidth) return;
     const tx = btn.offsetLeft, tw = btn.offsetWidth;
     if (instant || indX === null){ indX = tx; indW = tw; ind.style.transform = `translateX(${tx}px)`; ind.style.width = tw+"px"; return; }
-    const fx = indX, fw = indW, vx = indSX ? indSX.v : 0, vw = indSW ? indSW.v : 0;
-    indSX && indSX.stop(); indSW && indSW.stop();
-    indSX = spring({ from:fx, to:tx, v:vx, damping:1, response:.32, update:x=>{ indX = x; ind.style.transform = `translateX(${x}px)`; } });
-    indSW = spring({ from:fw, to:tw, v:vw, damping:1, response:.32, update:w=>{ indW = w; ind.style.width = w+"px"; } });
+    const vx = indSX ? indSX.v : 0, vw = indSW ? indSW.v : 0; indSX && indSX.stop(); indSW && indSW.stop();
+    indSX = spring({ from:indX, to:tx, v:vx, damping:1, response:.32, update:x=>{ indX = x; ind.style.transform = `translateX(${x}px)`; } });
+    indSW = spring({ from:indW, to:tw, v:vw, damping:1, response:.32, update:w=>{ indW = w; ind.style.width = w+"px"; } });
   }
-  function show(v, instant){
-    $("tCli").classList.toggle("on", v==="cli"); $("tNeg").classList.toggle("on", v==="neg");
-    $("tCli").style.color = v==="cli" ? "#fff" : ""; $("tNeg").style.color = v==="neg" ? "#fff" : "";
-    $("vCli").hidden = v!=="cli"; $("vNeg").hidden = v!=="neg";
-    moveInd(v==="cli" ? $("tCli") : $("tNeg"), instant);
+  function views(){
+    const cli = tab === "cli", me = !!ls.get("cid"), pin = !!ls.get("pin");
+    $("tCli").classList.toggle("on", cli); $("tNeg").classList.toggle("on", !cli);
+    $("tCli").style.color = cli ? "#fff" : ""; $("tNeg").style.color = !cli ? "#fff" : "";
+    $("vReg").hidden = !(cli && !me); $("vCli").hidden = !(cli && me);
+    $("vPin").hidden = !(!cli && !pin); $("vNeg").hidden = !(!cli && pin);
+    if (!cli) RC.hidden = true;
   }
+  function show(v, instant){ tab = v; views(); moveInd(v==="cli" ? $("tCli") : $("tNeg"), instant); if (v === "neg") pollNeg(); else pollMe(); }
   function applyMode(){
     mode = (location.hash||"").slice(1);
     const only = mode==="cliente" || mode==="negocio";
     $("tabs").hidden = only;
-    $("modeTag").textContent = mode==="cliente" ? "Demo · cliente" : mode==="negocio" ? "Demo · negocio" : "Demo · Parapapa";
+    $("modeTag").textContent = mode==="cliente" ? "Parapapa" : mode==="negocio" ? "Parapapa · barra" : "Demo · Parapapa";
     show(mode==="negocio" ? "neg" : "cli", true);
   }
-  // Responde al pulsar (pointerdown), no al soltar
   $("tCli").addEventListener("pointerdown", ()=>show("cli")); $("tNeg").addEventListener("pointerdown", ()=>show("neg"));
   $("tCli").onclick = ()=>show("cli"); $("tNeg").onclick = ()=>show("neg");
-  window.addEventListener("hashchange", applyMode);
+  addEventListener("hashchange", applyMode);
 
-  /* ---------- QR decorativo ---------- */
-  function drawQR(cv, seed){
+  /* ---------- QR: el del mostrador es real (apunta a esta tarjeta) ---------- */
+  const QR_URL = location.origin + "/?qr=mostrador";
+  try{ const q = qrcode(0, "M"); q.addData(QR_URL); q.make(); $("counterQr").src = q.createDataURL(6, 2); }catch(e){}
+  function drawQR(cv, seed){   // dibujo para la simulación del escáner
     const N=25, ctx=cv.getContext("2d"), s=cv.width/N;
     let x = 2166136261; for (const ch of seed) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0;
     const rnd = () => { x ^= x<<13; x>>>=0; x ^= x>>>17; x ^= x<<5; x>>>=0; return x/4294967296; };
@@ -464,122 +539,10 @@
     for (let i=0;i<N;i++) for (let j=0;j<N;j++) if (!inF(i,j) && rnd()<.5) ctx.fillRect(i*s,j*s,Math.ceil(s),Math.ceil(s));
     finder(0,0); finder(N-7,0); finder(0,N-7);
   }
-  drawQR($("counterQr"), "parapapa-mostrador");
 
-  /* ---------- cliente ---------- */
-  // El sello «cae» sobre la tarjeta: un golpe con algo de rebote (es un gesto con fuerza), vibración y sonido en el mismo instante.
-  function stampIn(el){
-    el.style.opacity = "0";
-    thock(); try{ navigator.vibrate && navigator.vibrate(18); }catch(e){}
-    spring({ from:0, to:1, damping:.72, response:.38,
-      update:p => { el.style.opacity = Math.min(1, p*3); el.style.transform = `scale(${1.55 - .55*p}) rotate(${-14*(1-p)}deg)`; },
-      done:() => { el.style.transform = ""; el.style.opacity = ""; } });
-  }
-  /* Reseña en Google: se pide a todos por igual, sin premio a cambio (lo exige Google), y nunca de forma pesada:
-     tras un sello nuevo; «Ahora no» la aplaza 5 sellos; si ya la ha dejado, no vuelve a salir. */
-  const ls = { get:k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} } };
-  const RC = $("revCard"); let rcY = 0, rcSp = null, rcT = 0;
-  const rcSet = y => { rcY = y; RC.style.transform = `translateY(${y}px)`; };
-  function rcTo(to, v, done){ rcSp && rcSp.stop(); rcSp = spring({ from:rcY, to, v:v||0, damping:1, response:.38, update:rcSet, done }); }
-  function hideReview(v){ rcTo(RC.offsetHeight + 40, v, () => { RC.hidden = true; }); setTimeout(() => { if (rcY > 0) RC.hidden = true; }, 700); }
-  function maybeAskReview(stamps){
-    if (ls.get("revDone") || stamps < (+ls.get("revAfter") || 1) || mode === "negocio") return;
-    clearTimeout(rcT);
-    rcT = setTimeout(() => { if (!$("vCli").hidden && RC.hidden){ RC.hidden = false; rcSet(RC.offsetHeight + 40); rcTo(0); } }, 1800);   // después de que caiga el sello
-  }
-  $("revNo").onclick = () => { ls.set("revAfter", String(st.stamps + 5)); hideReview(); };
-  $("revYes").addEventListener("click", () => { ls.set("revDone", "1"); hideReview(); reSub(); });
-  $("revLink2").addEventListener("click", () => { ls.set("revDone", "1"); reSub(); });
-  function reSub(){ try{ if (Notification.permission === "granted" && ls.get("pushRole")) subscribe(ls.get("pushRole"), false).catch(()=>{}); }catch(e){} }
-  drag(RC, "y", { start:() => { rcSp && rcSp.stop(); return rcY; }, move:y => rcSet(y < 0 ? -rubber(-y, 60) : y),
-    end:v => { if (rcY + project(v) > RC.offsetHeight/2){ ls.set("revAfter", String(st.stamps + 5)); hideReview(v); } else rcTo(0, v); } });
-  try{ const o = JSON.parse(ls.get("others") || "null"); if (Array.isArray(o) && o.length) others.splice(0, others.length, ...o); }catch(e){}
-  const fromPush = /[?&]resena=1/.test(location.search);
-  if (fromPush) history.replaceState(null, "", location.pathname + location.hash);
-  let shown = -1;
-  const myPending = () => st.reqs.find(r => r.status === "pendiente");
-  function renderCli(){
-    const inCard = st.stamps % 10, full = inCard===0 && st.free>0, filled = full ? 10 : inCard;
-    const fresh = shown >= 0 && filled > shown ? shown : -1;
-    $("stamps").innerHTML = Array.from({length:10},(_,i)=>`<div class="stamp ${i<filled?'on':''}">${i<filled?'☕':''}</div>`).join("");
-    if (fresh >= 0) [...$("stamps").children].slice(fresh, filled).forEach((el, j) => setTimeout(() => stampIn(el), j*90));
-    shown = filled;
-    // ¿Ha recibido un sello desde la última vez que la vio? (también si la abre desde el aviso del móvil)
-    const seen = +ls.get("seenStamps") || 0;
-    if ((seen && st.stamps > seen) || (fromPush && !maybeAskReview.done)) { maybeAskReview.done = true; maybeAskReview(st.stamps); }
-    if (st.stamps !== seen) ls.set("seenStamps", String(st.stamps));
-    $("progress").textContent = st.free>0 ? `¡Tienes ${st.free} café${st.free>1?"s":""} gratis! Pídelo en la barra 🎉` : `Te faltan ${10-inCard} cafés para el siguiente gratis`;
-    $("ptsTxt").textContent = `${st.stamps} sellos`;
-    $("rewards").innerHTML =
-      `<div class="reward"><div><b>Café gratis</b><br><span>Cada 10 sellos</span></div>${st.free>0?`<span class="pill ok">Disponible${st.free>1?" ×"+st.free:""}</span>`:`<span class="pill">Faltan ${10-inCard}</span>`}</div>` +
-      REWARDS.map(r=>`<div class="reward"><div><b>${r.txt}</b><br><span>${r.at} sellos</span></div>${st.stamps>=r.at?'<span class="pill ok">Disponible</span>':`<span class="pill">Faltan ${r.at-st.stamps}</span>`}</div>`).join("");
-    const last = st.avisos.slice(-3).reverse();
-    $("notifs").innerHTML = last.map(()=>`<div class="notif"><div class="ic">☕</div><div><strong>Parapapa</strong><p></p></div></div>`).join("");
-    [...$("notifs").querySelectorAll("p")].forEach((p,i)=>{ p.textContent = last[i].m; });
-    const pend = !!myPending();
-    $("waitBox").hidden = !pend; $("scanCounter").hidden = pend;
-  }
-
-  /* ---------- negocio ---------- */
-  const ago = t => { const s = Math.max(0, Math.round((Date.now()-t)/1000)); return s < 60 ? `hace ${s} s` : `hace ${Math.round(s/60)} min`; };
-  let swiping = false;
-  function bindSwipe(wrap){
-    const row = wrap.querySelector(".req"), id = row.dataset.id, ua = wrap.querySelector(".a"), ur = wrap.querySelector(".r");
-    let x = 0, sp = null;
-    const set = v => { x = v; row.style.transform = `translateX(${v}px)`; const w = wrap.offsetWidth*.4; ua.style.opacity = Math.max(0, Math.min(1, v/w)); ur.style.opacity = Math.max(0, Math.min(1, -v/w)); };
-    drag(row, "x", {
-      start: () => { sp && sp.stop(); return x; },             // se puede agarrar a mitad de animación
-      lock: () => { swiping = true; },
-      move: v => { const lim = wrap.offsetWidth; set(Math.abs(v) > lim ? Math.sign(v)*(lim + rubber(Math.abs(v)-lim, lim)) : v); },
-      cancel: () => {},
-      end: vel => {
-        const w = wrap.offsetWidth, land = x + project(vel);   // decide por hacia dónde iba el dedo, no por dónde lo soltó
-        const dir = land > w*.4 ? 1 : land < -w*.4 ? -1 : 0;
-        if (!dir){ sp = spring({ from:x, to:0, v:vel, damping:1, response:.3, update:set, done:()=>{ swiping = false; } }); return; }
-        let once = false; const fin = () => { if (once) return; once = true; swiping = false; decide(id, dir > 0); };
-        sp = spring({ from:x, to:dir*(w+40), v:vel, damping:1, response:.25, update:set, done:fin });
-        setTimeout(fin, 450);                                   // la decisión no depende de que se pinte la animación
-      }
-    });
-  }
-  function renderNeg(){
-    if (swiping) return;                                      // no repintar mientras el dedo está encima
-    const pend = st.reqs.filter(r => r.status === "pendiente");
-    $("reqs").innerHTML = `<h3>Solicitudes de sello ${pend.length ? `<span class="count">${pend.length}</span>` : ""}</h3>` +
-      (pend.length ? `<p class="swipehint">Desliza → para aceptar · ← para rechazar (o usa los botones)</p>` + pend.map(r => `<div class="reqwrap"><div class="under"><span class="a">✓ Aceptar</span><span class="r">Rechazar ✕</span></div>
-        <div class="req" data-id="${r.id}"><div class="who"><b>☕ ${r.name} pide un sello</b><span>${ago(r.at)} · ${(st.stamps%10)}/10 sellos</span></div>
-        <button class="btn okb" data-ok="${r.id}">Aceptar</button><button class="btn no" data-no="${r.id}">Rechazar</button></div></div>`).join("")
-        : `<p class="muted" style="margin:6px 0 0;font-size:13.5px">No hay ninguna pendiente. Cuando un cliente escanee el QR del mostrador, aparecerá aquí y sonará un aviso.</p>`);
-    $("reqs").querySelectorAll(".reqwrap").forEach(bindSwipe);
-    const L = [{ name:"Laura", ...st }, ...others];
-    $("sCli").textContent = 128; $("sVis").textContent = 412 + L.reduce((a,c)=>a+c.visits,0); $("sRep").textContent = "64%";
-    $("tbl").innerHTML = L.map(c=>`<tr><td></td><td>${c.stamps % 10}/10${c.free?" · 🎁":""}</td><td>${c.visits}</td><td>${c.last}</td></tr>`).join("");
-    [...$("tbl").querySelectorAll("tr")].forEach((tr,i)=>{ tr.firstChild.textContent = L[i].name; });
-    const sel=$("who"), v=sel.value, q=($("findQ").value||"").trim().toLowerCase().replace(/\s/g,"");
-    const idx = L.map((c,i)=>i).filter(i => !q || (L[i].name.toLowerCase().replace(/\s/g,"") + (L[i].tel||"")).includes(q));
-    sel.innerHTML = idx.map(i=>`<option value="${i}"></option>`).join("") || `<option value="" disabled selected>Nadie con «${q}»</option>`;
-    [...sel.options].forEach((o,k)=>{ if (idx[k] !== undefined) o.textContent = L[idx[k]].name + (L[idx[k]].tel ? ` · ${L[idx[k]].tel}` : "") + (L[idx[k]].card ? ` · nº ${L[idx[k]].card}` : ""); });
-    if (v && idx.includes(+v)) sel.value = v;
-    $("sCli").textContent = 128 + others.filter(c => c.nuevo).length;
-  }
-  function render(){ renderCli(); renderNeg(); }
-
-  /* ---------- guardar: servidor (dos móviles) o este móvil ---------- */
-  let online = false, ver = 0, saving = false;
-  async function save(){
-    if (!online) return;
-    saving = true;
-    try{ const r = await fetch("/api/state", { method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(st) }); const j = await r.json(); ver = j.ver || ver; }
-    catch(e){ toast("Sin conexión: prueba otra vez"); }
-    finally{ saving = false; }
-  }
-  function aviso(m){ st.avisos.push({ id:Date.now(), m }); st.avisos = st.avisos.slice(-8); }
-  function addStamps(c, n){ for (let i=0;i<n;i++){ c.stamps++; if (c.stamps%10===0) c.free++; } c.visits++; c.last="Hoy"; }
-
-  /* ---------- sonido y notificación ---------- */
+  /* ---------- sonido ---------- */
   let ac = null;
-  function unlock(){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); }catch(e){} }
-  document.addEventListener("pointerdown", unlock, { once:false });
+  document.addEventListener("pointerdown", () => { try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); }catch(e){} });
   function ding(){
     if (!ac) return;
     [[1568,0],[2093,.15],[2637,.3]].forEach(([f,t]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type="triangle"; o.frequency.value=f;
@@ -587,7 +550,6 @@
       o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0+.5); });
     try{ navigator.vibrate && navigator.vibrate([200,80,200]); }catch(e){}
   }
-  // Golpe seco y grave del sello (solo en el momento del sello: el sonido tiene que tener causa)
   function thock(){
     if (!ac) return;
     try{ const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime;
@@ -595,29 +557,119 @@
       g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.5, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .16);
       o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + .2); }catch(e){}
   }
-  // Aviso tipo iOS: entra desde arriba con un muelle, se quita arrastrándolo hacia arriba (sale por donde entró)
+  // Aviso dentro de la tarjeta (solo si el cliente no tiene activados los avisos del móvil)
   const P = $("push"); let py = 0, pSp = null, pHide = 0;
   const pOff = () => -(P.offsetHeight + 30);
   const pSet = y => { py = y; P.style.transform = `translate(-50%, ${y}px)`; };
   pSet(-400);
   function pTo(to, v, done){ pSp && pSp.stop(); pSp = spring({ from:py, to, v:v||0, damping:1, response:.35, update:pSet, done }); }
-  function pushNote(m){
-    $("pushTxt").textContent = m;
-    if (py < pOff()) pSet(pOff());
-    pTo(0); try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(e){}
-    clearTimeout(pHide); pHide = setTimeout(() => pTo(pOff()), 4200);
-  }
-  const pDrag = drag(P, "y", {
-    start: () => { pSp && pSp.stop(); clearTimeout(pHide); return py; },
-    move: y => pSet(y > 0 ? rubber(y, 120) : y),               // hacia abajo cede cada vez menos
-    end: vel => { const land = py + project(vel);
-      if (land < pOff()/2) pTo(pOff(), vel); else { pTo(0, vel); pHide = setTimeout(() => pTo(pOff()), 3000); } }
-  });
+  function pushNote(m){ $("pushTxt").textContent = m; if (py < pOff()) pSet(pOff()); pTo(0); try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(e){} clearTimeout(pHide); pHide = setTimeout(() => pTo(pOff()), 4200); }
+  const pDrag = drag(P, "y", { start:() => { pSp && pSp.stop(); clearTimeout(pHide); return py; }, move:y => pSet(y > 0 ? rubber(y, 120) : y),
+    end:vel => { const land = py + project(vel); if (land < pOff()/2) pTo(pOff(), vel); else { pTo(0, vel); pHide = setTimeout(() => pTo(pOff()), 3000); } } });
   P.addEventListener("click", () => { if (!pDrag.moved){ clearTimeout(pHide); pTo(pOff()); } });
 
-  /* ---------- cliente: escanear el QR del mostrador ---------- */
+  /* ---------- hoja inferior (instalar / privacidad) ---------- */
+  const SH = $("sheet"), SC = $("scrim"); let shY = 0, shSp = null;
+  const shSet = y => { shY = y; SH.style.transform = `translateY(${y}px)`; SC.style.opacity = Math.max(0, 1 - y / (SH.offsetHeight || 1)); };
+  function shTo(to, v, done){ shSp && shSp.stop(); shSp = spring({ from:shY, to, v:v||0, damping:1, response:.35, update:shSet, done }); }
+  function openSheet(kind){
+    $("sheetInstall").hidden = kind !== "install"; $("sheetPriv").hidden = kind !== "priv";
+    if (kind === "install"){ const s = sheetSteps(); $("sheetSub").textContent = s.sub; $("sheetSteps").innerHTML = s.steps.map(t => `<li>${t}</li>`).join(""); }
+    SC.hidden = false; SH.hidden = false; shSet(SH.offsetHeight + 40); shTo(0);
+  }
+  function closeSheet(v){ const fin = () => { SH.hidden = true; SC.hidden = true; }; shTo(SH.offsetHeight + 40, v, fin); setTimeout(() => { if (shY > 0) fin(); }, 600); }
+  drag(SH, "y", { start:() => { shSp && shSp.stop(); return shY; }, move:y => shSet(y < 0 ? -rubber(-y, 80) : y),
+    end:v => { (shY + project(v) > SH.offsetHeight/3) ? closeSheet(v) : shTo(0, v); } });
+  SC.onclick = () => closeSheet(); $("sheetOk").onclick = () => closeSheet();
+  document.addEventListener("click", e => { if (e.target.closest("[data-priv]")){ e.preventDefault(); openSheet("priv"); } });
+
+  /* ================= CLIENTE ================= */
+  let me = null, myReq = null, gen = ls.get("gen") || "", shown = -1, seenAv = null;
+  const saveCopy = () => { if (me){ ls.set("cid", me.id); ls.set("gen", gen); ls.set("copy", JSON.stringify(me)); } };
+  const qrScan = /[?&]qr=mostrador/.test(location.search), fromPush = /[?&]resena=1/.test(location.search);
+  if (qrScan || fromPush) history.replaceState(null, "", location.pathname + (location.hash || "#cliente"));
+  let wantStamp = qrScan;   // ha escaneado el QR de verdad: en cuanto sepamos quién es, pedimos el sello
+
+  function forget(msg){ ["cid","copy","gen","revDone","revAfter","seenStamps"].forEach(ls.del); me = null; myReq = null; shown = -1; views(); if (msg) toast(msg); }
+
+  // Registro
+  $("regForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = $("rName").value.trim(), tel = $("rTel").value, err = $("rErr"); err.hidden = true;
+    if (!name) { err.textContent = "Escribe tu nombre"; err.hidden = false; return; }
+    if (tel.replace(/\D/g,"").length < 9) { err.textContent = "Escribe un móvil válido (9 cifras)"; err.hidden = false; return; }
+    if (!$("rPriv").checked) { err.textContent = "Para crear la tarjeta hay que aceptar la política de privacidad"; err.hidden = false; return; }
+    $("rGo").disabled = true;
+    try{
+      const j = await api("/api/register", { name, tel, priv:true, ofertas:$("rOf").checked });
+      gen = j.gen; me = j.client; saveCopy(); views(); renderCli(); toast(`¡Tarjeta creada, ${me.name}! ☕`);
+      if (wantStamp) requestStamp();
+    }catch(x){
+      err.textContent = x.body && x.body.exists ? "Ya tienes una tarjeta con este móvil: entra con tu teléfono aquí abajo." : x.message; err.hidden = false;
+      if (x.body && x.body.exists){ $("loginForm").hidden = false; $("lTel").value = tel; }
+    }finally{ $("rGo").disabled = false; }
+  });
+  $("toLogin").onclick = () => { $("loginForm").hidden = false; $("lTel").focus(); };
+  $("loginForm").addEventListener("submit", async e => {
+    e.preventDefault(); const err = $("lErr"); err.hidden = true;
+    try{ const j = await api("/api/login", { tel:$("lTel").value }); gen = j.gen; me = j.client; saveCopy(); views(); renderCli(); toast(`Hola de nuevo, ${me.name} ☕`); if (wantStamp) requestStamp(); }
+    catch(x){ err.textContent = x.message; err.hidden = false; }
+  });
+
+  // El sello «cae» sobre la tarjeta
+  function stampIn(el){
+    el.style.opacity = "0"; thock(); try{ navigator.vibrate && navigator.vibrate(18); }catch(e){}
+    spring({ from:0, to:1, damping:.72, response:.38,
+      update:p => { el.style.opacity = Math.min(1, p*3); el.style.transform = `scale(${1.55 - .55*p}) rotate(${-14*(1-p)}deg)`; },
+      done:() => { el.style.transform = ""; el.style.opacity = ""; } });
+  }
+  // Reseña en Google: a todos por igual, sin premio a cambio; «Ahora no» la aplaza 5 sellos
+  const RC = $("revCard"); let rcY = 0, rcSp = null, rcT = 0;
+  const rcSet = y => { rcY = y; RC.style.transform = `translateY(${y}px)`; };
+  function rcTo(to, v, done){ rcSp && rcSp.stop(); rcSp = spring({ from:rcY, to, v:v||0, damping:1, response:.38, update:rcSet, done }); }
+  function hideReview(v){ rcTo(RC.offsetHeight + 40, v, () => { RC.hidden = true; }); setTimeout(() => { if (rcY > 0) RC.hidden = true; }, 700); }
+  function maybeAskReview(stamps){
+    if (ls.get("revDone") || stamps < (+ls.get("revAfter") || 1)) return;
+    clearTimeout(rcT); rcT = setTimeout(() => { if (!$("vCli").hidden && RC.hidden){ RC.hidden = false; rcSet(RC.offsetHeight + 40); rcTo(0); } }, 1800);
+  }
+  const reviewed = () => { ls.set("revDone", "1"); hideReview(); reSub(); };
+  $("revNo").onclick = () => { ls.set("revAfter", String((me ? me.stamps : 0) + 5)); hideReview(); };
+  $("revYes").addEventListener("click", reviewed); $("revLink2").addEventListener("click", reviewed);
+  drag(RC, "y", { start:() => { rcSp && rcSp.stop(); return rcY; }, move:y => rcSet(y < 0 ? -rubber(-y, 60) : y),
+    end:v => { if (rcY + project(v) > RC.offsetHeight/2){ ls.set("revAfter", String((me ? me.stamps : 0) + 5)); hideReview(v); } else rcTo(0, v); } });
+
+  function renderCli(){
+    if (!me) return;
+    $("hi").textContent = `Hola, ${me.name} ☕`;
+    const inCard = me.stamps % 10, full = inCard===0 && me.free>0, filled = full ? 10 : inCard;
+    const fresh = shown >= 0 && filled > shown ? shown : -1;
+    $("stamps").innerHTML = Array.from({length:10},(_,i)=>`<div class="stamp ${i<filled?'on':''}">${i<filled?'☕':''}</div>`).join("");
+    if (fresh >= 0) [...$("stamps").children].slice(fresh, filled).forEach((el, j) => setTimeout(() => stampIn(el), j*90));
+    shown = filled;
+    const seen = +ls.get("seenStamps") || 0;
+    if ((seen && me.stamps > seen) || (fromPush && !maybeAskReview.done)){ maybeAskReview.done = true; maybeAskReview(me.stamps); }
+    if (me.stamps !== seen) ls.set("seenStamps", String(me.stamps));
+    $("progress").textContent = me.free>0 ? `¡Tienes ${me.free} café${me.free>1?"s":""} gratis! Pídelo en la barra 🎉` : `Te faltan ${10-inCard} cafés para el siguiente gratis`;
+    $("ptsTxt").textContent = `${me.stamps} sello${me.stamps===1?"":"s"}`;
+    $("cardNo").textContent = `TARJETA Nº ${me.card}`;
+    $("rewards").innerHTML =
+      `<div class="reward"><div><b>Café gratis</b><br><span>Cada 10 sellos</span></div>${me.free>0?`<span class="pill ok">Disponible${me.free>1?" ×"+me.free:""}</span>`:`<span class="pill">Faltan ${10-inCard}</span>`}</div>` +
+      REWARDS.map(r=>`<div class="reward"><div><b>${r.txt}</b><br><span>${r.at} sellos</span></div>${me.stamps>=r.at?'<span class="pill ok">Disponible</span>':`<span class="pill">Faltan ${r.at-me.stamps}</span>`}</div>`).join("");
+    const last = (me.avisos || []).slice(-3).reverse();
+    $("notifs").innerHTML = last.length ? last.map(a=>`<div class="notif"><div class="ic">☕</div><div><strong>Parapapa</strong><p>${esc(a.m)}</p></div></div>`).join("") : `<p class="muted">Aún no tienes avisos.</p>`;
+    const pend = myReq && myReq.status === "pendiente";
+    $("waitBox").hidden = !pend; $("scanCounter").hidden = pend;
+    $("ofToggle").textContent = me.ofertas ? "Ofertas: activadas" : "Ofertas: desactivadas";
+  }
+
+  async function requestStamp(){
+    if (!me) return; wantStamp = false;
+    try{ const j = await api("/api/request", { id:me.id }); myReq = j.req; renderCli(); toast("Sello pedido: espera a que lo confirmen en la barra ☕"); }
+    catch(x){ if (x.status === 410) forget("Tu tarjeta ya no existe. Créala de nuevo."); else toast("Sin conexión: prueba otra vez"); }
+  }
+
+  // Simulación del escáner dentro de la app (también puedes escanear el QR real con la cámara)
   let scanT = [], ovSp = null, ovP = 0;
-  // El escáner nace del botón que lo abre y vuelve a él al cerrarse (coherencia espacial)
   function ovAnim(open, done){
     const ov = $("scanOv"), b = $("scanCounter").getBoundingClientRect();
     ov.style.transformOrigin = `${b.left + b.width/2}px ${b.top + b.height/2}px`;
@@ -626,157 +678,179 @@
       update:p => { ovP = p; ov.style.opacity = Math.max(0, Math.min(1, p)); ov.style.transform = `scale(${.6 + .4*p})`; },
       done:() => { ov.style.transform = ""; done && done(); } });
   }
-  function closeScan(){ scanT.forEach(clearTimeout); const hide = () => { if (ovP < .5) $("scanOv").hidden = true; };
-    ovAnim(false, hide); setTimeout(() => { ovSp && ovSp.stop(); ovP = 0; hide(); }, 500); }
+  function closeScan(){ scanT.forEach(clearTimeout); const hide = () => { if (ovP < .5) $("scanOv").hidden = true; }; ovAnim(false, hide); setTimeout(() => { ovSp && ovSp.stop(); ovP = 0; hide(); }, 500); }
   $("scanCounter").onclick = () => {
-    if (myPending()) return;
+    if (myReq && myReq.status === "pendiente") return;
     $("scanOv").hidden = false; ovAnim(true); $("finder").classList.remove("ok"); $("scanTxt").textContent = "Apunta al QR del mostrador…";
-    drawQR($("scanC"), "parapapa-mostrador");
-    scanT.forEach(clearTimeout);
-    scanT = [
-      setTimeout(()=>{ $("finder").classList.add("ok"); $("scanTxt").textContent = "✓ Parapapa · sello pedido"; try{ navigator.vibrate && navigator.vibrate(80); }catch(e){} }, 1500),
-      setTimeout(async ()=>{ closeScan();
-        st.reqs = st.reqs.filter(r => r.status === "pendiente").concat([{ id:"r"+Date.now(), name:"Laura", at:Date.now(), status:"pendiente" }]).slice(-10);
-        render(); toast("Sello pedido: espera a que lo confirmen en la barra"); await save();
-        if (!online && $("vCli").hidden === false && !$("tabs").hidden) toast("En la demo: abre la pestaña Negocio y acéptalo"); }, 2200)
-    ];
+    drawQR($("scanC"), "parapapa-mostrador"); scanT.forEach(clearTimeout);
+    scanT = [ setTimeout(()=>{ $("finder").classList.add("ok"); $("scanTxt").textContent = "✓ Parapapa · sello pedido"; try{ navigator.vibrate && navigator.vibrate(80); }catch(e){} }, 1500),
+              setTimeout(()=>{ closeScan(); requestStamp(); }, 2200) ];
   };
   $("scanX").onclick = closeScan;
 
-  /* ---------- negocio: aceptar o rechazar ---------- */
-  async function decide(id, accept){
-    const r = st.reqs.find(x => x.id === id);
-    if (!r || r.status !== "pendiente") return;
-    if (accept){ const before = st.free; addStamps(st, 1); r.status = "aceptada";
-      aviso(st.free > before ? "🎉 ¡Tarjeta completa! Tu próximo café es gratis." : `+1 sello. Te faltan ${10 - st.stamps % 10} para el café gratis.`);
-      toast(`Sello sumado a ${r.name}`); try{ navigator.vibrate && navigator.vibrate(30); }catch(e){} }
-    else { r.status = "rechazada"; toast("Solicitud rechazada"); }
-    render(); await save();
-  }
-  document.addEventListener("click", e => {
-    const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]");
-    if (!ok && !no) return;
-    decide(ok ? ok.dataset.ok : no.dataset.no, !!ok);
-  });
+  // Ofertas sí/no y borrar mis datos
+  $("ofToggle").onclick = () => toast("Para cambiarlo, pídelo en la barra (en la versión final se cambia aquí mismo)");
+  let delArmed = false;
+  $("delMe").onclick = async () => {
+    if (!delArmed){ delArmed = true; $("delMe").textContent = "Pulsa otra vez para borrar tu tarjeta"; setTimeout(() => { delArmed = false; $("delMe").textContent = "Borrar mis datos"; }, 3500); return; }
+    try{ await api("/api/delete-me", { id:me.id }); }catch(e){}
+    forget("Hemos borrado tu tarjeta y tus datos");
+  };
 
-  /* ---------- resto del panel ---------- */
-  /* ---------- alta de clientes sin móvil ---------- */
-  const saveOthers = () => ls.set("others", JSON.stringify(others));
-  $("findQ").addEventListener("input", () => renderNeg());
+  // Sincronización con el servidor
+  let meVer = -1;
+  async function pollMe(){
+    if (tab !== "cli" || !ls.get("cid")) return;
+    try{
+      let copy = null; try{ copy = JSON.parse(ls.get("copy") || "null"); }catch(e){}
+      const j = await api("/api/me", { id:ls.get("cid"), gen, copy });
+      $("live").hidden = false;
+      const prevReq = myReq, prevAv = (me && me.avisos || []).map(a => a.id);
+      gen = j.gen; me = j.client; myReq = j.req; saveCopy();
+      if (!$("vCli").hidden && prevReq && prevReq.status === "pendiente" && myReq && myReq.id === prevReq.id && myReq.status !== "pendiente" && !pushOn("cliente"))
+        pushNote(myReq.status === "aceptada" ? "☕ +1 sello. ¡Gracias por venir!" : "No se ha podido confirmar el sello. Pregunta en la barra.");
+      else if (seenAv && !pushOn("cliente")){ const nw = (me.avisos || []).filter(a => !prevAv.includes(a.id)); if (nw.length) pushNote(nw[nw.length-1].m); }
+      seenAv = true; views(); renderCli();
+      if (wantStamp) requestStamp();
+    }catch(x){
+      if (x.status === 410) forget(ls.get("copy") ? "Tu tarjeta ya no existe. Créala de nuevo cuando quieras." : "");
+    }
+  }
+
+  /* ================= NEGOCIO ================= */
+  let pnl = null, swiping = false, lastPend = null;
+  const pin = () => ls.get("pin");
+  $("pinForm").addEventListener("submit", async e => {
+    e.preventDefault(); $("pinErr").hidden = true;
+    try{ pnl = await api("/api/neg/panel", null, $("pinIn").value); ls.set("pin", $("pinIn").value); $("pinIn").value = ""; views(); renderNeg(); }
+    catch(x){ $("pinErr").hidden = false; }
+  });
+  $("logoutNeg").onclick = () => { ls.del("pin"); pnl = null; views(); };
+
+  function bindSwipe(wrap){
+    const row = wrap.querySelector(".req"), id = row.dataset.id, ua = wrap.querySelector(".a"), ur = wrap.querySelector(".r");
+    let x = 0, sp = null;
+    const set = v => { x = v; row.style.transform = `translateX(${v}px)`; const w = wrap.offsetWidth*.4; ua.style.opacity = Math.max(0, Math.min(1, v/w)); ur.style.opacity = Math.max(0, Math.min(1, -v/w)); };
+    drag(row, "x", {
+      start: () => { sp && sp.stop(); return x; }, lock: () => { swiping = true; },
+      move: v => { const lim = wrap.offsetWidth; set(Math.abs(v) > lim ? Math.sign(v)*(lim + rubber(Math.abs(v)-lim, lim)) : v); },
+      cancel: () => {},
+      end: vel => {
+        const w = wrap.offsetWidth, land = x + project(vel), dir = land > w*.4 ? 1 : land < -w*.4 ? -1 : 0;
+        if (!dir){ sp = spring({ from:x, to:0, v:vel, damping:1, response:.3, update:set, done:()=>{ swiping = false; } }); return; }
+        let once = false; const fin = () => { if (once) return; once = true; swiping = false; decide(id, dir > 0); };
+        sp = spring({ from:x, to:dir*(w+40), v:vel, damping:1, response:.25, update:set, done:fin }); setTimeout(fin, 450);
+      }
+    });
+  }
+  function renderNeg(){
+    if (!pnl || swiping) return;
+    const pend = pnl.reqs;
+    $("reqs").innerHTML = `<h3>Solicitudes de sello ${pend.length ? `<span class="count">${pend.length}</span>` : ""}</h3>` +
+      (pend.length ? `<p class="swipehint">Desliza → para aceptar · ← para rechazar (o usa los botones)</p>` + pend.map(r => `<div class="reqwrap"><div class="under"><span class="a">✓ Aceptar</span><span class="r">Rechazar ✕</span></div>
+        <div class="req" data-id="${esc(r.id)}"><div class="who"><b>☕ ${esc(r.name)} pide un sello</b><span>${ago(r.at)} · ${r.stamps % 10}/10 sellos</span></div>
+        <button class="btn okb" data-ok="${esc(r.id)}">Aceptar</button><button class="btn no" data-no="${esc(r.id)}">Rechazar</button></div></div>`).join("")
+        : `<p class="muted" style="margin:6px 0 0;font-size:13.5px">No hay ninguna pendiente. Cuando un cliente escanee el QR del mostrador, aparecerá aquí y sonará un aviso.</p>`);
+    $("reqs").querySelectorAll(".reqwrap").forEach(bindSwipe);
+    const s = pnl.stats; $("sCli").textContent = s.clientes; $("sVis").textContent = s.visitasMes; $("sRep").textContent = s.repiten + "%"; $("sOf").textContent = s.conOfertas;
+    const L = pnl.clients;
+    $("noCli").hidden = L.length > 0;
+    $("tbl").innerHTML = L.map(c=>`<tr><td><b>${esc(c.name)}</b>${c.canal==="mostrador"?'<span class="tag">sin móvil</span>':""}<small>${c.tel ? esc(c.tel) + " · " : ""}nº ${esc(c.card)}${c.ofertas ? " · ofertas ✓" : ""}</small></td><td>${c.stamps % 10}/10${c.free?" · 🎁":""}</td><td>${c.visits}</td><td>${ago(c.last)}</td></tr>`).join("");
+    const sel = $("who"), v = sel.value, q = ($("findQ").value||"").trim().toLowerCase().replace(/\s/g,"");
+    const F = L.filter(c => !q || (c.name.toLowerCase().replace(/\s/g,"") + (c.tel||"") + c.card).includes(q));
+    sel.innerHTML = F.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.tel ? " · " + esc(c.tel) : ""} · nº ${esc(c.card)}</option>`).join("") || `<option value="" disabled selected>${L.length ? "Nadie con «" + esc(q) + "»" : "Aún no hay clientes"}</option>`;
+    if (v && F.some(c => c.id === v)) sel.value = v;
+  }
+  async function negCall(p, body, okMsg){
+    try{ const j = await api(p, body, pin()); pnl = j; renderNeg(); if (okMsg) toast(typeof okMsg === "function" ? okMsg(j) : okMsg); return j; }
+    catch(x){ if (x.status === 401){ ls.del("pin"); views(); toast("Vuelve a poner el PIN"); } else toast(x.message || "Sin conexión"); }
+  }
+  function decide(id, ok){ try{ navigator.vibrate && navigator.vibrate(30); }catch(e){} return negCall("/api/neg/decide", { id, ok }, ok ? "Sello sumado ☕" : "Solicitud rechazada"); }
+  document.addEventListener("click", e => { const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]"); if (ok || no) decide(ok ? ok.dataset.ok : no.dataset.no, !!ok); });
+  $("findQ").addEventListener("input", renderNeg);
+  $("addStamp").onclick = () => { const id = $("who").value; if (!id) return toast("Busca primero al cliente"); const c = pnl.clients.find(x => x.id === id); negCall("/api/neg/stamp", { id }, `Sello sumado a ${c ? c.name : "el cliente"}`); };
   $("newCliBtn").onclick = () => { $("newCli").hidden = false; $("newCliBtn").hidden = true; $("ncDone").hidden = true; $("ncName").focus(); };
   $("ncCancel").onclick = () => { $("newCli").hidden = true; $("newCliBtn").hidden = false; };
-  $("newCli").addEventListener("submit", e => {
+  $("newCli").addEventListener("submit", async e => {
     e.preventDefault();
-    const name = $("ncName").value.trim(), tel = $("ncTel").value.replace(/[^\d+]/g,"");
-    if (!name) return toast("Escribe su nombre");
-    const card = String(130 + others.filter(c => c.nuevo).length).padStart(4, "0");        // número para su tarjetita física
-    const c = { name, tel, card, ofertas:$("ncOk").checked, stamps:0, free:0, visits:0, last:"Hoy", nuevo:true };
-    if ($("ncFirst").checked) addStamps(c, 1);
-    others.push(c); saveOthers();
-    $("newCli").reset(); $("ncFirst").checked = true; $("newCli").hidden = true; $("newCliBtn").hidden = false;
-    $("findQ").value = ""; renderNeg(); $("who").value = String(others.length);           // queda seleccionado
-    $("ncDone").hidden = false;
-    $("ncDone").textContent = `✓ ${name} dado de alta · Tarjeta nº ${card}${c.stamps ? " · 1 sello" : ""}. Apunta el número en su tarjetita de cartón y la próxima vez búscalo por nombre o teléfono.`;
-    toast(`${name} dado de alta`);
+    const name = $("ncName").value.trim(); if (!name) return toast("Escribe su nombre");
+    if (!$("ncPriv").checked) return toast("Antes, infórmale de la política de privacidad y marca la casilla");
+    const j = await negCall("/api/neg/newclient", { name, tel:$("ncTel").value, ofertas:$("ncOk").checked, first:$("ncFirst").checked }, `${name} dado de alta`);
+    if (!j || !j.created) return;
+    $("newCli").reset(); $("ncFirst").checked = true; $("newCli").hidden = true; $("newCliBtn").hidden = false; $("findQ").value = ""; renderNeg(); $("who").value = j.created.id;
+    $("ncDone").hidden = false; $("ncDone").textContent = `✓ ${j.created.name} dado de alta · Tarjeta nº ${j.created.card}${j.created.stamps ? " · 1 sello" : ""}. Apunta el número en su tarjetita de cartón y la próxima vez búscalo por nombre, teléfono o número.`;
   });
-  $("addStamp").onclick = async()=>{
-    if ($("who").value === "") return toast("Busca primero al cliente");
-    const i=+$("who").value;
-    if (i===0){ const before=st.free; addStamps(st,1); aviso(st.free>before ? "🎉 ¡Tarjeta completa! Tu próximo café es gratis." : `+1 sello. Te faltan ${10-st.stamps%10} para el café gratis.`); render(); toast("Sello sumado a Laura"); await save(); }
-    else { addStamps(others[i-1],1); saveOthers(); render(); toast(`Sello sumado a ${others[i-1].name}`); }
+  $("send").onclick = () => { const m = $("msg").value.trim(); if (!m) return toast("Escribe el aviso");
+    negCall("/api/neg/broadcast", { m, seg:$("seg").value }, j => j.sent ? `Aviso enviado a ${j.sent} cliente${j.sent>1?"s":""}` : "Ningún cliente de ese grupo ha aceptado recibir ofertas"); };
+  let armed = false;
+  $("reset").onclick = () => {
+    if (!armed){ armed = true; $("reset").textContent = "Pulsa otra vez: se borrarán todos los clientes"; setTimeout(() => { armed = false; $("reset").textContent = "Reiniciar la demo (borra todos los clientes)"; }, 3500); return; }
+    armed = false; $("reset").textContent = "Reiniciar la demo (borra todos los clientes)"; negCall("/api/neg/reset", {}, "Demo reiniciada: no hay clientes");
   };
-  $("send").onclick = async()=>{ const m=$("msg").value.trim(); if(!m) return toast("Escribe el aviso"); aviso(m); render(); toast(`Aviso enviado ${$("seg").selectedOptions[0].textContent.toLowerCase()}`); await save(); };
-  const RESET_TXT = "Reiniciar la demo (Laura vuelve a 6 sellos)"; let armed = false;
-  $("reset").onclick = async()=>{
-    if (!armed){ armed=true; $("reset").textContent="Pulsa otra vez para reiniciar"; setTimeout(()=>{ armed=false; $("reset").textContent=RESET_TXT; },3000); return; }
-    armed=false; $("reset").textContent=RESET_TXT; st = clone(START); st.avisos=[{ id:Date.now(), m:START.avisos[0].m }]; shown=-1; render(); toast("Demo reiniciada"); await save();
-  };
-  /* ---------- Añadir a la pantalla de inicio (app instalable) ---------- */
+  async function pollNeg(){
+    if (tab !== "neg" || !pin()) return;
+    try{
+      const j = await api("/api/neg/panel", null, pin()); $("live").hidden = false;
+      const ids = j.reqs.map(r => r.id), nuevos = lastPend ? ids.filter(i => !lastPend.includes(i)) : [];
+      lastPend = ids; pnl = j; renderNeg();
+      if (nuevos.length && !pushOn("negocio")) ding();
+    }catch(x){ if (x.status === 401){ ls.del("pin"); views(); } }
+  }
+
+  /* ================= instalar, actualizar y avisos push ================= */
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const inApp = /Instagram|FBAN|FBAV|WhatsApp|Line\/|TikTok|; wv\)/i.test(ua);       // navegadores dentro de otras apps
+  const inApp = /Instagram|FBAN|FBAV|WhatsApp|Line\/|TikTok|; wv\)/i.test(ua);
   const isSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
   const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   let deferred = null;
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js", { updateViaCache:"none" }).catch(()=>{});
-
-  /* ---------- Actualización automática: al abrir la tarjeta, si hemos publicado cambios, se recarga sola ---------- */
   let build = null, reloading = false;
   const hadSW = "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
-  const busy = () => !$("scanOv").hidden || !$("sheet").hidden || swiping;      // nunca en mitad de algo
+  const busy = () => !$("scanOv").hidden || !SH.hidden || swiping || document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   async function checkVersion(){
-    try{
-      const v = await fetch("/api/version", { cache:"no-store" }).then(r => r.ok ? r.text() : null);
+    try{ const v = await fetch("/api/version", { cache:"no-store" }).then(r => r.ok ? r.text() : null);
       if (v && build && v !== build && !busy() && !reloading){ reloading = true; location.reload(); return; }
-      if (v) build = v;
-    }catch(e){}
+      if (v) build = v; }catch(e){}
   }
   checkVersion();
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) return;
-    checkVersion();
-    navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(()=>{});
-  });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (hadSW && !reloading && !busy()){ reloading = true; location.reload(); }       // entra el service worker nuevo
-  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) return; checkVersion(); pollMe(); pollNeg();
+    navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(()=>{}); });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadSW && !reloading && !busy()){ reloading = true; location.reload(); } });
   addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; });
   addEventListener("appinstalled", () => { deferred = null; markInstalled(); toast("¡Listo! Ya tienes Parapapa en tu pantalla de inicio ☕"); });
-  function markInstalled(){ $("wHome").outerHTML = `<div class="installed" id="wHome">✓ Tarjeta guardada en tu móvil</div>`; }
+  function markInstalled(){ const w = $("wHome"); if (w) w.outerHTML = `<div class="installed" id="wHome">✓ Tarjeta guardada en tu móvil</div>`; }
   if (standalone()) markInstalled();
-
   const SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg>';
   const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
   const DOTS = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
   function sheetSteps(){
-    if (inApp) return { sub:"Estás dentro de otra app (Instagram, WhatsApp…). Ábrela en el navegador para poder guardarla:",
-      steps:[`Toca los tres puntos o el menú de arriba ${DOTS}`, `Elige «Abrir en ${isIOS ? "Safari" : "Chrome"}»`, "Vuelve a pulsar «Añadir a la pantalla de inicio»"] };
+    if (inApp) return { sub:"Estás dentro de otra app (Instagram, WhatsApp…). Ábrela en el navegador para poder guardarla:", steps:[`Toca los tres puntos o el menú de arriba ${DOTS}`, `Elige «Abrir en ${isIOS ? "Safari" : "Chrome"}»`, "Vuelve a pulsar «Añadir a la pantalla de inicio»"] };
     if (isIOS && !isSafari) return { sub:"En iPhone solo se puede guardar desde Safari:", steps:["Copia este enlace y ábrelo en Safari", `Toca Compartir ${SHARE}`, `Elige «Añadir a pantalla de inicio» ${PLUS}`] };
     if (isIOS) return { sub:"Son dos toques:", steps:[`Toca el botón Compartir de Safari, abajo ${SHARE}`, `Baja y elige «Añadir a pantalla de inicio» ${PLUS}`, "Pulsa «Añadir» arriba a la derecha"] };
     return { sub:"Desde el menú del navegador:", steps:[`Toca el menú del navegador ${DOTS}`, `Elige «Añadir a pantalla de inicio» o «Instalar aplicación» ${PLUS}`, "Confirma con «Instalar» o «Añadir»"] };
   }
-  // Hoja inferior: sube con un muelle, se cierra arrastrándola hacia abajo (con inercia) o con «Entendido»
-  const SH = $("sheet"), SC = $("scrim"); let shY = 0, shSp = null;
-  const shSet = y => { shY = y; SH.style.transform = `translateY(${y}px)`; SC.style.opacity = Math.max(0, 1 - y / (SH.offsetHeight || 1)); };
-  function shTo(to, v, done){ shSp && shSp.stop(); shSp = spring({ from:shY, to, v:v||0, damping:1, response:.35, update:shSet, done }); }
-  function openSheet(){
-    const s = sheetSteps(); $("sheetSub").textContent = s.sub;
-    $("sheetSteps").innerHTML = s.steps.map(t => `<li>${t}</li>`).join("");
-    SC.hidden = false; SH.hidden = false; shSet(SH.offsetHeight + 40); shTo(0);
-  }
-  function closeSheet(v){ const fin = () => { SH.hidden = true; SC.hidden = true; }; shTo(SH.offsetHeight + 40, v, fin); setTimeout(() => { if (shY > 0) fin(); }, 600); }
-  drag(SH, "y", { start:() => { shSp && shSp.stop(); return shY; },
-    move:y => shSet(y < 0 ? -rubber(-y, 80) : y),
-    end:v => { (shY + project(v) > SH.offsetHeight/3) ? closeSheet(v) : shTo(0, v); } });
-  SC.onclick = () => closeSheet(); $("sheetOk").onclick = () => closeSheet();
-
   document.addEventListener("click", async e => {
     if (e.target.id !== "wHome" || standalone()) return;
-    if (deferred){                                             // Android / Chrome / Edge: ventana nativa de instalar
-      deferred.prompt(); const r = await deferred.userChoice.catch(()=>({})); deferred = null;
-      if (r && r.outcome === "accepted") markInstalled();
-      return;
-    }
-    openSheet();                                               // iPhone y el resto: instrucciones paso a paso
+    if (deferred){ deferred.prompt(); const r = await deferred.userChoice.catch(()=>({})); deferred = null; if (r && r.outcome === "accepted") markInstalled(); return; }
+    openSheet("install");
   });
 
-  /* ---------- Notificaciones push (como una app: llegan con el móvil bloqueado) ---------- */
   const b64u = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
-  const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
-  const lsSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
-  const pushOn = role => pushOK && Notification.permission === "granted" && lsGet("pushRole") === role;
   const pushOK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const pushOn = role => pushOK && Notification.permission === "granted" && ls.get(role === "negocio" ? "pushNeg" : "pushCli") === "1";
   function markPush(role){ const b = $(role === "negocio" ? "pushNeg" : "pushCli"); if (b){ b.textContent = role === "negocio" ? "🔔 Avisos de solicitudes activados en este móvil" : "🔔 Avisos activados"; b.disabled = true; } }
   async function subscribe(role, test){
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub){ const key = await fetch("/api/vapid").then(r => { if (!r.ok) throw new Error("claves"); return r.text(); });
       sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u(key) }); }
-    await fetch("/api/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ sub, role, test, reviewed: !!ls.get("revDone") }) });
-    lsSet("pushRole", role); markPush(role);
+    await api("/api/subscribe", { sub, role, test, cid:ls.get("cid"), pin:pin(), reviewed:!!ls.get("revDone") });
+    ls.set(role === "negocio" ? "pushNeg" : "pushCli", "1"); markPush(role);
   }
+  function reSub(){ try{ if (pushOn("cliente")) subscribe("cliente", false).catch(()=>{}); }catch(e){} }
   async function enablePush(role){
-    if (isIOS && !standalone()){ toast("En iPhone, primero guarda la tarjeta en la pantalla de inicio y actívalos desde allí"); openSheet(); return; }
+    if (isIOS && !standalone()){ toast("En iPhone, primero guarda la tarjeta en la pantalla de inicio y actívalos desde allí"); openSheet("install"); return; }
     if (!pushOK){ toast("Este navegador no admite avisos. Prueba con Chrome o Safari"); return; }
     const perm = await Notification.requestPermission();
     if (perm !== "granted"){ toast("Sin permiso no te podemos avisar. Puedes activarlo en los ajustes del navegador"); return; }
@@ -785,39 +859,16 @@
   }
   $("pushCli").onclick = () => enablePush("cliente");
   $("pushNeg").onclick = () => enablePush("negocio");
-  // Si ya tenía permiso, se vuelve a apuntar en cada visita (el servidor gratuito se reinicia y olvida)
-  if (pushOK && Notification.permission === "granted" && lsGet("pushRole")) subscribe(lsGet("pushRole"), false).catch(()=>{});
-
-  applyMode(); render();
-  setInterval(() => { if (!$("vNeg").hidden) renderNeg(); }, 5000);   // refresca «hace X s»
-
-  /* ---------- conexión con el servidor (dos móviles) ---------- */
-  let firstLoad = true;
-  async function poll(){
-    if (saving) return;
-    try{
-      const r = await fetch("/api/state", { cache:"no-store" }); if (!r.ok) throw 0;
-      const j = await r.json(); online = true; $("live").hidden = false;
-      if (!j.state){ if (firstLoad){ firstLoad = false; await save(); } return; }
-      if (j.ver === ver && !firstLoad) return;
-      const prev = st; ver = j.ver; st = j.state; st.reqs = st.reqs || []; st.avisos = st.avisos || [];
-      if (!firstLoad){
-        const newPend = st.reqs.filter(x => x.status === "pendiente" && !prev.reqs.some(p => p.id === x.id));
-        if (newPend.length && mode !== "cliente" && !$("vNeg").hidden && !pushOn("negocio")) ding();
-        if (mode !== "negocio" && !$("vCli").hidden && !pushOn("cliente")){   // con avisos del móvil activados, solo llega el del móvil
-          const acc = st.reqs.find(x => x.status === "aceptada" && prev.reqs.some(p => p.id === x.id && p.status === "pendiente"));
-          const rej = st.reqs.find(x => x.status === "rechazada" && prev.reqs.some(p => p.id === x.id && p.status === "pendiente"));
-          const newAv = st.avisos.filter(a => !prev.avisos.some(p => p.id === a.id));
-          if (acc) pushNote("☕ +1 sello. ¡Gracias por venir!");
-          else if (rej) pushNote("No se ha podido confirmar el sello. Pregunta en la barra.");
-          else if (newAv.length) pushNote(newAv[newAv.length-1].m);
-        }
-      }
-      if (st.stamps < prev.stamps){ shown = -1; ["revDone","revAfter","seenStamps"].forEach(k => { try{ localStorage.removeItem(k); }catch(e){} }); }
-      firstLoad = false; render();
-    }catch(e){ online = false; }
+  if (pushOK && Notification.permission === "granted"){
+    if (ls.get("pushCli") === "1" && ls.get("cid")) subscribe("cliente", false).catch(()=>{});
+    if (ls.get("pushNeg") === "1" && pin()) subscribe("negocio", false).catch(()=>{});
   }
-  poll(); setInterval(poll, 1500);
+
+  /* ---------- arranque ---------- */
+  try{ me = JSON.parse(ls.get("copy") || "null"); }catch(e){ me = null; }
+  applyMode(); renderCli();
+  setInterval(pollMe, 2000); setInterval(pollNeg, 2000);
+  setInterval(() => { if (!$("vNeg").hidden) renderNeg(); }, 15000);
 })();
 </script>
 </body>
