@@ -24,5 +24,6 @@ http.createServer((req, res) => {
   }
   const file = path.join(PUB, url.pathname === "/" ? "index.html" : path.normalize(decodeURIComponent(url.pathname)));
   if (!file.startsWith(PUB)) return send(res, 403, "no", "text/plain");
-  fs.readFile(file, (e, d) => e ? send(res, 404, "No encontrado", "text/plain") : send(res, 200, d, file.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream"));
+  const TYPES = { ".html":"text/html; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".webmanifest":"application/manifest+json", ".png":"image/png" };
+  fs.readFile(file, (e, d) => e ? send(res, 404, "No encontrado", "text/plain") : send(res, 200, d, TYPES[path.extname(file)] || "application/octet-stream"));
 }).listen(PORT, () => console.log("Puntos Parapapa en :" + PORT));
