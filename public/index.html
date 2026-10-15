@@ -592,7 +592,28 @@
   const isSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
   const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   let deferred = null;
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js", { updateViaCache:"none" }).catch(()=>{});
+
+  /* ---------- Actualización automática: al abrir la tarjeta, si hemos publicado cambios, se recarga sola ---------- */
+  let build = null, reloading = false;
+  const hadSW = "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
+  const busy = () => !$("scanOv").hidden || !$("sheet").hidden || swiping;      // nunca en mitad de algo
+  async function checkVersion(){
+    try{
+      const v = await fetch("/api/version", { cache:"no-store" }).then(r => r.ok ? r.text() : null);
+      if (v && build && v !== build && !busy() && !reloading){ reloading = true; location.reload(); return; }
+      if (v) build = v;
+    }catch(e){}
+  }
+  checkVersion();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    checkVersion();
+    navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(()=>{});
+  });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadSW && !reloading && !busy()){ reloading = true; location.reload(); }       // entra el service worker nuevo
+  });
   addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; });
   addEventListener("appinstalled", () => { deferred = null; markInstalled(); toast("¡Listo! Ya tienes Parapapa en tu pantalla de inicio ☕"); });
   function markInstalled(){ $("wHome").outerHTML = `<div class="installed" id="wHome">✓ Tarjeta guardada en tu móvil</div>`; }

@@ -6,6 +6,8 @@ const http = require("http"), https = require("https"), fs = require("fs"), path
 const PORT = process.env.PORT || 10002;
 const PUB = path.join(__dirname, "public");
 let state = null, ver = 0;
+// Versión publicada: cambia en cada deploy. La tarjeta la consulta al abrirse y se actualiza sola si hay una nueva.
+const BUILD = process.env.RENDER_GIT_COMMIT || String(fs.statSync(path.join(PUB, "index.html")).mtimeMs);
 
 const send = (res, code, body, type = "application/json") => {
   res.writeHead(code, { "Content-Type": type, "Cache-Control": "no-store" });
@@ -56,6 +58,7 @@ http.createServer((req, res) => {
     if (req.method === "PUT") return readBody(req, b => { if (!b) return send(res, 400, { error:"json" }); const prev = state; state = b; ver++; onNewState(prev, b); send(res, 200, { ver }); });
     return send(res, 405, { error: "method" });
   }
+  if (url.pathname === "/api/version") return send(res, 200, BUILD, "text/plain");
   if (url.pathname === "/api/vapid") return vKey ? send(res, 200, VPUB, "text/plain") : send(res, 503, "sin claves", "text/plain");
   if (url.pathname === "/api/subscribe" && req.method === "POST") return readBody(req, b => {
     if (!b || !b.sub || !b.sub.endpoint || !/^https:\/\//.test(b.sub.endpoint)) return send(res, 400, { error:"sub" });
