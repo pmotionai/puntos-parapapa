@@ -169,6 +169,12 @@
   .card{background:#23925D; box-shadow:0 14px 30px rgba(35,146,93,.28);}
   .card .logo{display:block; height:46px; width:auto; margin:-2px 0 6px -4px;}
   .stamp.on{color:#23925D;}
+  /* Instagram arriba, siempre a la vista */
+  .hello{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
+  .hello > div{min-width:0;}
+  .igmini{flex:none; display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:var(--brown); font-size:11.5px; font-weight:500; margin-top:4px; transition:transform 100ms ease-out; -webkit-tap-highlight-color:transparent;}
+  .igmini:active{transform:scale(.94);}
+  .igmini svg{width:46px; height:46px; padding:10px; border-radius:14px; color:#fff; background:linear-gradient(45deg,#F58529,#DD2A7B 50%,#8134AF); box-shadow:0 6px 16px rgba(221,42,123,.28);}
   /* Instagram y reseñas */
   .follow{display:flex; flex-direction:column; gap:8px;}
   .igbtn{display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--brown); background:var(--white); border:1px solid var(--line); border-radius:14px; padding:12px 14px; transition:transform 100ms ease-out; -webkit-tap-highlight-color:transparent;}
@@ -209,8 +215,14 @@
 
   <!-- ===== CLIENTE ===== -->
   <section id="vCli">
-    <h1>Hola, Laura ☕</h1>
-    <p class="muted">Tu tarjeta de Parapapa (Vilassar de Mar), siempre en el móvil.</p>
+    <div class="hello">
+      <div><h1>Hola, Laura ☕</h1>
+      <p class="muted">Tu tarjeta de Parapapa (Vilassar de Mar), siempre en el móvil.</p></div>
+      <a class="igmini" id="igTop" href="https://www.instagram.com/explore/search/keyword/?q=parapapa%20vilassar" target="_blank" rel="noopener" aria-label="Síguenos en Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        <span>Síguenos</span>
+      </a>
+    </div>
 
     <div class="card">
       <div class="card-head">
