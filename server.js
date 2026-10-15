@@ -33,10 +33,11 @@ function push(endpoint){
   const u = new URL(endpoint);
   const req = https.request(u, { method:"POST", headers:{ TTL:"3600", Urgency:"high", "Content-Length":0,
     Authorization:`vapid t=${vapidJWT(u.origin)}, k=${VPUB}` } }, res => {
+    console.log("push", u.host, res.statusCode);
     if (res.statusCode === 404 || res.statusCode === 410) subs.delete(endpoint);   // el móvil ya no acepta avisos
     res.resume();
   });
-  req.on("error", () => {}); req.end();
+  req.on("error", e => console.log("push error", u.host, e.message)); req.end();
 }
 function notify(role, msg){ for (const [ep, s] of subs) if (s.role === role){ s.msg = msg; push(ep); } }
 // Compara el estado nuevo con el anterior: aviso nuevo → clientes; solicitud nueva → negocio
@@ -60,6 +61,7 @@ http.createServer((req, res) => {
     if (!b || !b.sub || !b.sub.endpoint || !/^https:\/\//.test(b.sub.endpoint)) return send(res, 400, { error:"sub" });
     const old = subs.get(b.sub.endpoint);
     subs.set(b.sub.endpoint, { sub:b.sub, role:b.role === "negocio" ? "negocio" : "cliente", msg:old ? old.msg : null });
+    console.log("subscribe", b.role, new URL(b.sub.endpoint).host, "total", subs.size);
     if (b.test) { subs.get(b.sub.endpoint).msg = { title:"Parapapa", body:"¡Avisos activados! Te avisaremos de tus sellos y ofertas ☕", url:b.role === "negocio" ? "/#negocio" : "/#cliente" }; push(b.sub.endpoint); }
     send(res, 200, { ok:true });
   });
